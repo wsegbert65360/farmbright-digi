@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 142 72% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 210 100% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 142 72% 50%;
+
+    --radius: 1rem;
+
+    /* Farm-specific tokens */
+    --plant: 142 72% 50%;
+    --plant-foreground: 0 0% 0%;
+    --spray: 210 100% 55%;
+    --spray-foreground: 0 0% 100%;
+    --harvest: 45 100% 55%;
+    --harvest-foreground: 0 0% 0%;
+    --neon-glow-plant: 0 0 20px hsl(142 72% 50% / 0.4);
+    --neon-glow-spray: 0 0 20px hsl(210 100% 55% / 0.4);
+    --neon-glow-harvest: 0 0 20px hsl(45 100% 55% / 0.4);
+
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 142 72% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 142 72% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Scrollbar styling for OLED */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 0%);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 20%);
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .glow-plant {
+    box-shadow: 0 0 20px hsl(142 72% 50% / 0.35), 0 0 40px hsl(142 72% 50% / 0.15);
+  }
+  .glow-spray {
+    box-shadow: 0 0 20px hsl(210 100% 55% / 0.35), 0 0 40px hsl(210 100% 55% / 0.15);
+  }
+  .glow-harvest {
+    box-shadow: 0 0 20px hsl(45 100% 55% / 0.35), 0 0 40px hsl(45 100% 55% / 0.15);
+  }
+  .glow-destructive {
+    box-shadow: 0 0 20px hsl(0 85% 55% / 0.35), 0 0 40px hsl(0 85% 55% / 0.15);
+  }
+  .touch-target {
+    min-width: 64px;
+    min-height: 64px;
+  }
+}
