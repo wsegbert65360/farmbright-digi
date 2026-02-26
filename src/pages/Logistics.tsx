@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import type { Bin } from '@/types/farm';
 
 export default function Logistics() {
-  const { bins, getBinTotal, grainMovements } = useFarm();
+  const { bins: allBins, getBinTotal, grainMovements, activeSeason } = useFarm();
+  const bins = allBins.filter(b => !b.deleted_at);
   const [managing, setManaging] = useState(false);
   const [sellingBin, setSellingBin] = useState<Bin | null>(null);
 
@@ -23,7 +24,7 @@ export default function Logistics() {
 
       return { ...bin, total, pct, recentMovements: movements };
     });
-  }, [bins, getBinTotal, grainMovements]);
+  }, [bins, getBinTotal, grainMovements, activeSeason]);
 
   return (
     <div className="min-h-screen bg-background pb-24">

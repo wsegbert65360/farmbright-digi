@@ -3,7 +3,7 @@ import { Map, Wheat, ClipboardList, FileText, Settings } from 'lucide-react';
 
 const tabs = [
   { path: '/', icon: Map, label: 'Fields' },
-  { path: '/logistics', icon: Wheat, label: 'Grain' },
+  { path: '/logistics', icon: Wheat, label: 'Logistics' },
   { path: '/activity', icon: ClipboardList, label: 'Activity' },
   { path: '/reports', icon: FileText, label: 'Reports' },
   { path: '/settings', icon: Settings, label: 'Setup' },
@@ -22,9 +22,8 @@ export default function BottomNav() {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`touch-target flex flex-col items-center justify-center gap-1 py-3 px-3 transition-colors ${
-                active ? 'text-primary' : 'text-muted-foreground'
-              }`}
+              className={`touch-target flex flex-col items-center justify-center gap-1 py-3 px-3 transition-colors ${active ? 'text-primary' : 'text-muted-foreground'
+                }`}
             >
               <Icon size={22} strokeWidth={active ? 2.5 : 1.5} />
               <span className="text-[10px] font-mono font-medium">{label}</span>

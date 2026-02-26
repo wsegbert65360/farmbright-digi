@@ -1,8 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
-import { ClipboardList, Sprout, Droplets, Wheat, Trash2, Warehouse } from 'lucide-react';
+import { ClipboardList, Sprout, Droplets, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor } from 'lucide-react';
 import { formatDate } from '@/config/constants';
+import { generateMissouriLog, exportFsa578Data } from '@/lib/complianceReports';
+import PlantModal from '@/components/PlantModal';
+import SprayModal from '@/components/SprayModal';
+import HarvestModal from '@/components/HarvestModal';
+import HayModal from '@/components/HayModal';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,21 +20,41 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type Tab = 'plant' | 'spray' | 'harvest' | 'grain';
+type Tab = 'plant' | 'spray' | 'harvest' | 'hay' | 'grain';
 
-const TABS: { key: Tab; icon: any; label: string; color: string }[] = [
+const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[] = [
   { key: 'plant', icon: Sprout, label: 'Plant', color: 'text-plant' },
   { key: 'spray', icon: Droplets, label: 'Spray', color: 'text-spray' },
-  { key: 'harvest', icon: Wheat, label: 'Harvest', color: 'text-harvest' },
-  { key: 'grain', icon: Warehouse, label: 'Grain', color: 'text-harvest' },
+  { key: 'harvest', icon: Wheat, label: 'Grain', color: 'text-harvest' },
+  { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-harvest' },
+  { key: 'grain', icon: Warehouse, label: 'Logistics', color: 'text-harvest' },
 ];
 
 export default function Activity() {
-  const { plantRecords, sprayRecords, harvestRecords, grainMovements, deletePlantRecords, deleteSprayRecords, deleteHarvestRecords, deleteGrainMovements } = useFarm();
+  const {
+    fields,
+    plantRecords,
+    sprayRecords,
+    harvestRecords,
+    hayHarvestRecords,
+    grainMovements,
+    activeSeason,
+    deletePlantRecords,
+    deleteSprayRecords,
+    deleteHarvestRecords,
+    deleteHayHarvestRecords,
+    deleteGrainMovements
+  } = useFarm();
   const [tab, setTab] = useState<Tab>('plant');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any | null>(null);
+
+  const edit = (e: React.MouseEvent, record: any) => {
+    e.stopPropagation();
+    setEditingRecord(record);
+  };
 
   const toggle = (id: string) => {
     setSelected(prev => {
@@ -44,6 +70,7 @@ export default function Activity() {
     if (tab === 'plant') deletePlantRecords(ids);
     else if (tab === 'spray') deleteSprayRecords(ids);
     else if (tab === 'harvest') deleteHarvestRecords(ids);
+    else if (tab === 'hay') deleteHayHarvestRecords(ids);
     else deleteGrainMovements(ids);
     setSelected(new Set());
     setConfirmDelete(false);
@@ -51,43 +78,73 @@ export default function Activity() {
 
   const filteredPlant = useMemo(() =>
     plantRecords
-      .filter(r => r.fieldName.toLowerCase().includes(search.toLowerCase()) || r.seedVariety.toLowerCase().includes(search.toLowerCase()))
+      .filter(r => !r.deleted_at && r.seasonYear === activeSeason && (r.fieldName.toLowerCase().includes(search.toLowerCase()) || r.seedVariety.toLowerCase().includes(search.toLowerCase())))
       .sort((a, b) => b.timestamp - a.timestamp),
-    [plantRecords, search]
+    [plantRecords, search, activeSeason]
   );
 
   const filteredSpray = useMemo(() =>
     sprayRecords
-      .filter(r => r.fieldName.toLowerCase().includes(search.toLowerCase()) || r.product.toLowerCase().includes(search.toLowerCase()))
+      .filter(r => !r.deleted_at && r.seasonYear === activeSeason && (r.fieldName.toLowerCase().includes(search.toLowerCase()) || r.product.toLowerCase().includes(search.toLowerCase())))
       .sort((a, b) => b.timestamp - a.timestamp),
-    [sprayRecords, search]
+    [sprayRecords, search, activeSeason]
   );
 
   const filteredHarvest = useMemo(() =>
     harvestRecords
-      .filter(r => r.fieldName.toLowerCase().includes(search.toLowerCase()))
+      .filter(r => !r.deleted_at && r.seasonYear === activeSeason && r.fieldName.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => b.timestamp - a.timestamp),
-    [harvestRecords, search]
+    [harvestRecords, search, activeSeason]
   );
 
   const filteredGrain = useMemo(() =>
     grainMovements
-      .filter(m => m.binName.toLowerCase().includes(search.toLowerCase()) || (m.sourceFieldName || '').toLowerCase().includes(search.toLowerCase()) || (m.destination || '').toLowerCase().includes(search.toLowerCase()))
+      .filter(m => m.seasonYear === activeSeason && (m.binName.toLowerCase().includes(search.toLowerCase()) || (m.sourceFieldName || '').toLowerCase().includes(search.toLowerCase()) || (m.destination || '').toLowerCase().includes(search.toLowerCase())))
       .sort((a, b) => b.timestamp - a.timestamp),
-    [grainMovements, search]
+    [grainMovements, search, activeSeason]
+  );
+
+  const filteredHay = useMemo(() =>
+    hayHarvestRecords
+      .filter(m => !m.deleted_at && m.seasonYear === activeSeason && (m.fieldName.toLowerCase().includes(search.toLowerCase()) || m.baleType.toLowerCase().includes(search.toLowerCase())))
+      .sort((a, b) => b.timestamp - a.timestamp),
+    [hayHarvestRecords, search, activeSeason]
   );
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-4">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <ClipboardList size={20} className="text-primary" />
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ClipboardList size={20} className="text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground tracking-tight">Activity</h1>
+              <p className="text-xs font-mono text-muted-foreground">REVIEW & MANAGE</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground tracking-tight">Activity</h1>
-            <p className="text-xs font-mono text-muted-foreground">REVIEW & MANAGE</p>
-          </div>
+
+          {tab === 'spray' && (
+            <button
+              onClick={() => generateMissouriLog(sprayRecords, fields)}
+              className="p-2.5 rounded-lg bg-spray/10 text-spray hover:bg-spray/20 transition-colors flex items-center gap-2 font-mono text-[10px] font-bold"
+              title="Export Missouri Spray Log (MP693)"
+            >
+              <FileDown size={16} />
+              EXPORT LOG
+            </button>
+          )}
+          {tab === 'plant' && (
+            <button
+              onClick={() => exportFsa578Data(plantRecords, fields)}
+              className="p-2.5 rounded-lg bg-plant/10 text-plant hover:bg-plant/20 transition-colors flex items-center gap-2 font-mono text-[10px] font-bold"
+              title="Export FSA-578 Data Summary"
+            >
+              <FileDown size={16} />
+              FSA EXPORT
+            </button>
+          )}
         </div>
       </header>
       <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -135,10 +192,20 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                  </div>
+                  <div className="text-xs font-mono text-plant mt-1">{r.seedVariety} · {r.acreage} ac</div>
+                </div>
+                <button
+                  onClick={(e) => edit(e, r)}
+                  className="ml-3 p-2 rounded-md hover:bg-plant/10 text-muted-foreground hover:text-plant transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
               </div>
-              <div className="text-xs font-mono text-plant mt-1">{r.seedVariety} · {r.acreage} ac</div>
             </button>
           ))}
 
@@ -150,12 +217,22 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
-              </div>
-              <div className="text-xs font-mono text-spray mt-1">
-                {r.product} · {r.windSpeed}mph · {r.temperature}°F
-                {r.startTime && ` · ${r.startTime}`}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                  </div>
+                  <div className="text-xs font-mono text-spray mt-1">
+                    {r.product} · {r.windSpeed}mph · {r.temperature}°F
+                    {r.startTime && ` · ${r.startTime}`}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => edit(e, r)}
+                  className="ml-3 p-2 rounded-md hover:bg-spray/10 text-muted-foreground hover:text-spray transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
               </div>
             </button>
           ))}
@@ -168,11 +245,21 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
-              </div>
-              <div className="text-xs font-mono text-harvest mt-1">
-                {r.bushels.toLocaleString()} bu → {r.destination === 'bin' ? 'Bin' : 'Town'} · {r.moisturePercent}% M · {r.landlordSplitPercent}% LL
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                  </div>
+                  <div className="text-xs font-mono text-harvest mt-1">
+                    {r.bushels.toLocaleString()} bu → {r.destination === 'bin' ? 'Bin' : 'Town'} · {r.moisturePercent}% M · {r.landlordSplitPercent}% LL
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => edit(e, r)}
+                  className="ml-3 p-2 rounded-md hover:bg-harvest/10 text-muted-foreground hover:text-harvest transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
               </div>
             </button>
           ))}
@@ -185,17 +272,27 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground text-sm">{m.binName}</span>
-                <span className="text-xs font-mono text-muted-foreground">{formatDate(m.timestamp)}</span>
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <div className={`text-xs font-mono font-bold ${m.type === 'in' ? 'text-plant' : 'text-destructive'}`}>
-                  {m.type === 'in' ? '+' : '-'}{m.bushels.toLocaleString()} bu
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{m.binName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatDate(m.timestamp)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className={`text-xs font-mono font-bold ${m.type === 'in' ? 'text-plant' : 'text-destructive'}`}>
+                      {m.type === 'in' ? '+' : '-'}{m.bushels.toLocaleString()} bu
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      {m.sourceFieldName || m.destination || 'Inventory Adjustment'}
+                      {m.price && ` · $${m.price}/bu`}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[10px] font-mono text-muted-foreground">
-                  {m.sourceFieldName || m.destination || 'Inventory Adjustment'}
-                  {m.price && ` · $${m.price}/bu`}
-                </div>
+                <button
+                  onClick={(e) => edit(e, m)}
+                  className="ml-3 p-2 rounded-md hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
               </div>
             </button>
           ))}
@@ -226,7 +323,49 @@ export default function Activity() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {tab === 'grain' && editingRecord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border p-6 rounded-xl shadow-2xl max-w-sm w-full space-y-4">
+            <h2 className="text-lg font-bold">Edit Grain Movement</h2>
+            <p className="text-sm text-muted-foreground">Grain movement editing is currently handled by updating the source activity (Harvest). Direct movement editing coming soon.</p>
+            <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+          </div>
+        </div>
+      )}
       <BottomNav />
+
+      {tab === 'plant' && editingRecord && (
+        <PlantModal
+          open={!!editingRecord}
+          onClose={() => setEditingRecord(null)}
+          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
+          initialData={editingRecord}
+        />
+      )}
+      {tab === 'spray' && editingRecord && (
+        <SprayModal
+          open={!!editingRecord}
+          onClose={() => setEditingRecord(null)}
+          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
+          initialData={editingRecord}
+        />
+      )}
+      {tab === 'harvest' && editingRecord && (
+        <HarvestModal
+          open={!!editingRecord}
+          onClose={() => setEditingRecord(null)}
+          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
+          initialData={editingRecord}
+        />
+      )}
+      {tab === 'hay' && editingRecord && (
+        <HayModal
+          open={!!editingRecord}
+          onClose={() => setEditingRecord(null)}
+          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
+          initialData={editingRecord}
+        />
+      )}
     </div>
   );
 }

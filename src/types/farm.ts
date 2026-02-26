@@ -6,6 +6,12 @@ export interface Field {
   lng: number;
   fsaFarmNumber?: string;
   fsaTractNumber?: string;
+  fsaFieldNumber?: string;
+  producerShare?: number; // 0 to 100 (%)
+  irrigationPractice?: 'Irrigated' | 'Non-Irrigated';
+  intendedUse?: string; // e.g. Grain, Forage, Seed
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface PlantRecord {
@@ -19,8 +25,14 @@ export interface PlantRecord {
   crop?: string;
   fsaFarmNumber?: string;
   fsaTractNumber?: string;
+  fsaFieldNumber?: string;
   intendedUse?: string;
   plantDate?: string;
+  producerShare?: number; // FSA 578 mandatory: 0 to 100 (%)
+  irrigationPractice?: 'Irrigated' | 'Non-Irrigated'; // FSA 578 mandatory: IR or NI
+  seasonYear?: number;
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface SprayRecord {
@@ -28,25 +40,32 @@ export interface SprayRecord {
   fieldId: string;
   fieldName: string;
   product: string;
-  windSpeed: number;
-  temperature: number;
+  products?: SprayRecipeProduct[]; // Granular details for regulatory compliance
+  windSpeed: number; // MDA mandatory: wind_speed_mph
+  temperature: number; // MDA mandatory: temp_f
   timestamp: number;
+  seasonYear?: number;
+  farm_id?: string;
+  deleted_at?: string;
   // Spray audit / personal license compliance
   applicatorName?: string;
   licenseNumber?: string;
-  epaRegNumber?: string;
+  epaRegNumber?: string; // MDA mandatory: epa_reg_num
   applicationRate?: string;
   rateUnit?: string;
+  mixtureRate?: string; // MDA mandatory: mixture_rate
+  totalMixtureVolume?: string; // MDA mandatory: total_mixture_volume
   targetPest?: string;
-  windDirection?: string;
+  windDirection?: string; // MDA mandatory: wind_direction
   relativeHumidity?: number;
   sprayDate?: string;
   // Regulatory compliance fields (2 CSR 70-25.120)
-  startTime?: string;
+  startTime?: string; // MDA mandatory: start_time
   involvedTechnicians?: string;
   siteAddress?: string;
   treatedAreaSize?: string;
   totalAmountApplied?: string;
+  equipmentId?: string; // Auditor requirement: Machine ID (e.g. Miller Nitro)
   isPremixed?: boolean;
 }
 
@@ -60,17 +79,38 @@ export interface HarvestRecord {
   landlordSplitPercent: number;
   bushels: number;
   timestamp: number;
+  seasonYear?: number;
   // FSA compliance fields
   crop?: string;
   fsaFarmNumber?: string;
   fsaTractNumber?: string;
   harvestDate?: string;
+  farm_id?: string;
+  deleted_at?: string;
+}
+
+export interface HayHarvestRecord {
+  id: string;
+  fieldId: string;
+  fieldName: string;
+  date: string;
+  baleCount: number;
+  cuttingNumber: number;
+  baleType: 'Round' | 'Square';
+  temperature?: number;
+  conditions?: string;
+  seasonYear?: number;
+  timestamp: number;
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface Bin {
   id: string;
   name: string;
   capacity: number;
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface GrainMovement {
@@ -82,19 +122,25 @@ export interface GrainMovement {
   moisturePercent: number;
   sourceFieldName?: string;
   timestamp: number;
+  seasonYear?: number;
   price?: number; // Price per bushel
   destination?: string; // Buyer or location
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface SavedSeed {
   id: string;
   name: string; // e.g. "DKC 64-35"
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export interface SprayRecipeProduct {
   product: string;
   rate: string;
   rateUnit: string;
+  epaRegNumber?: string; // Granular audit info
 }
 
 export interface SprayRecipe {
@@ -103,11 +149,14 @@ export interface SprayRecipe {
   products: SprayRecipeProduct[];
   applicatorName?: string;
   licenseNumber?: string;
-  epaRegNumber?: string;
   targetPest?: string;
+  epaRegNumber?: string; // Kept for backward compatibility/summary
+  farm_id?: string;
+  deleted_at?: string;
 }
 
 export type ActivityRecord =
   | { type: 'plant'; data: PlantRecord }
   | { type: 'spray'; data: SprayRecord }
-  | { type: 'harvest'; data: HarvestRecord };
+  | { type: 'harvest'; data: HarvestRecord }
+  | { type: 'hay'; data: HayHarvestRecord };

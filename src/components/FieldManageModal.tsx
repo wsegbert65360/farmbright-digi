@@ -25,6 +25,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
   const [lng, setLng] = useState(editField?.lng?.toString() || '');
   const [fsaFarm, setFsaFarm] = useState(editField?.fsaFarmNumber || '');
   const [fsaTract, setFsaTract] = useState(editField?.fsaTractNumber || '');
+  const [fsaField, setFsaField] = useState(editField?.fsaFieldNumber || '');
+  const [producerShare, setProducerShare] = useState(editField?.producerShare?.toString() || '100');
+  const [irrigation, setIrrigation] = useState<Field['irrigationPractice']>(editField?.irrigationPractice || 'Non-Irrigated');
+  const [intendedUse, setIntendedUse] = useState(editField?.intendedUse || 'Grain');
 
   const isEdit = !!editField;
 
@@ -40,7 +44,11 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
       lat: la,
       lng: ln,
       fsaFarmNumber: fsaFarm.trim() || undefined,
-      fsaTractNumber: fsaTract.trim() || undefined
+      fsaTractNumber: fsaTract.trim() || undefined,
+      fsaFieldNumber: fsaField.trim() || undefined,
+      producerShare: parseFloat(producerShare) || undefined,
+      irrigationPractice: irrigation,
+      intendedUse: intendedUse.trim() || undefined
     };
 
     if (isEdit) {
@@ -111,7 +119,7 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 pb-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">FSA Farm #</Label>
               <Input
@@ -127,6 +135,54 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
                 value={fsaTract}
                 onChange={e => setFsaTract(e.target.value)}
                 placeholder="5678"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">FSA Field #</Label>
+              <Input
+                value={fsaField}
+                onChange={e => setFsaField(e.target.value)}
+                placeholder="1"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Producer Share %</Label>
+              <Input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={producerShare}
+                onChange={e => setProducerShare(e.target.value)}
+                placeholder="100"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pb-2">
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Irrigation</Label>
+              <select
+                value={irrigation}
+                onChange={e => setIrrigation(e.target.value as any)}
+                className="flex h-9 w-full rounded-md border border-border bg-muted px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+              >
+                <option value="Non-Irrigated">Non-Irrigated</option>
+                <option value="Irrigated">Irrigated</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Intended Use</Label>
+              <Input
+                value={intendedUse}
+                onChange={e => setIntendedUse(e.target.value)}
+                placeholder="Grain"
                 className="mt-1 bg-muted border-border text-foreground"
               />
             </div>

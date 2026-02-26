@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud } from 'lucide-react';
+import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud, Database } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import type { SprayRecipeProduct } from '@/types/farm';
 import { toast } from 'sonner';
@@ -18,10 +18,45 @@ export default function Settings() {
         <SeedManager />
         <RecipeManager />
         <BackupManager />
+        <DeveloperTools />
         <AccountManager />
       </div>
       <BottomNav />
     </div>
+  );
+}
+
+function DeveloperTools() {
+  const { seedDemoData } = useFarm();
+
+  return (
+    <Card className="bg-card border-border/50 overflow-hidden relative group">
+      <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-bold flex items-center gap-2">
+          <Database size={16} className="text-blue-500" />
+          Developer Tools
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="bg-blue-500/5 p-3 rounded-lg border border-blue-500/20">
+          <p className="text-xs text-blue-500 font-mono leading-relaxed">
+            Generate a full year's worth of compliant data (Planting, Spraying, Harvesting) to audit report layouts and exports.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            seedDemoData();
+            toast.success('Generated 2025 Demo Data');
+          }}
+          variant="outline"
+          className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 font-mono text-xs h-10"
+        >
+          <Database size={14} className="mr-2" />
+          SEED FULL YEAR (2025)
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -227,13 +262,14 @@ function RecipeManager() {
                 {recipe.products.map((p, i) => (
                   <div key={i} className="text-muted-foreground font-mono text-xs pl-2">
                     • {p.product} — {p.rate} {p.rateUnit}
+                    {p.epaRegNumber && <span className="ml-2 text-[10px] opacity-70">(EPA: {p.epaRegNumber})</span>}
                   </div>
                 ))}
-                {(recipe.applicatorName || recipe.licenseNumber || recipe.epaRegNumber || recipe.targetPest) && (
-                  <div className="text-muted-foreground font-mono text-[10px] pl-2 pt-1 space-y-0.5 border-t border-border/50 mt-1">
-                    {recipe.applicatorName && <div>Applicator: {recipe.applicatorName}{recipe.licenseNumber ? ` (${recipe.licenseNumber})` : ''}</div>}
-                    {recipe.epaRegNumber && <div>EPA Reg: {recipe.epaRegNumber}</div>}
-                    {recipe.targetPest && <div>Target: {recipe.targetPest}</div>}
+                {(recipe.applicatorName || recipe.licenseNumber || recipe.targetPest || recipe.epaRegNumber) && (
+                  <div className="text-muted-foreground font-mono text-[10px] pl-2 pt-1 border-t border-border/50 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {recipe.applicatorName && <div>Applicator: <span className="text-foreground/70">{recipe.applicatorName}{recipe.licenseNumber ? ` (${recipe.licenseNumber})` : ''}</span></div>}
+                    {recipe.epaRegNumber && <div>Gen EPA: <span className="text-foreground/70">{recipe.epaRegNumber}</span></div>}
+                    {recipe.targetPest && <div>Target: <span className="text-foreground/70">{recipe.targetPest}</span></div>}
                   </div>
                 )}
               </div>
@@ -285,26 +321,40 @@ function RecipeForm({
       </div>
       <Label className="text-muted-foreground font-mono text-xs">PRODUCTS</Label>
       {products.map((p, i) => (
-        <div key={i} className="flex gap-2 items-start">
-          <div className="flex-1 space-y-1">
-            <Input value={p.product} onChange={e => updateProduct(i, 'product', e.target.value)} placeholder="Product name" className="bg-muted border-border text-foreground text-sm" />
-            <div className="flex gap-2">
-              <Input value={p.rate} onChange={e => updateProduct(i, 'rate', e.target.value)} placeholder="Rate" className="bg-muted border-border text-foreground text-sm w-20" />
-              <Input value={p.rateUnit} onChange={e => updateProduct(i, 'rateUnit', e.target.value)} placeholder="oz/ac" className="bg-muted border-border text-foreground text-sm w-20" />
+        <div key={i} className="flex gap-2 items-start border-b border-border/30 pb-3 last:border-0 last:pb-0">
+          <div className="flex-1 space-y-2">
+            <Input
+              value={p.product}
+              onChange={e => updateProduct(i, 'product', e.target.value)}
+              placeholder="Product name (e.g. Roundup)"
+              className="bg-muted border-border text-foreground text-sm"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <Label className="text-[10px] font-mono text-muted-foreground uppercase">Rate</Label>
+                <div className="flex gap-1">
+                  <Input value={p.rate} onChange={e => updateProduct(i, 'rate', e.target.value)} placeholder="22" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 flex-1" />
+                  <Input value={p.rateUnit} onChange={e => updateProduct(i, 'rateUnit', e.target.value)} placeholder="oz/ac" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 w-14" />
+                </div>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-[10px] font-mono text-muted-foreground uppercase">EPA Reg #</Label>
+                <Input value={p.epaRegNumber} onChange={e => updateProduct(i, 'epaRegNumber', e.target.value)} placeholder="e.g. 524-549" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8" />
+              </div>
             </div>
           </div>
           {products.length > 1 && (
-            <button onClick={() => removeProduct(i)} className="text-destructive hover:text-destructive/80 mt-2">
-              <X size={14} />
+            <button onClick={() => removeProduct(i)} className="text-destructive hover:text-destructive/80 mt-1">
+              <X size={16} />
             </button>
           )}
         </div>
       ))}
-      <Button onClick={addProduct} variant="ghost" size="sm" className="text-spray text-xs">
-        <Plus size={14} className="mr-1" /> Add Product
+      <Button onClick={addProduct} variant="ghost" size="sm" className="text-spray text-xs w-full border border-dashed border-spray/30">
+        <Plus size={14} className="mr-1" /> Add Herbicide to Mix
       </Button>
       <div className="border-t border-border/50 pt-3 space-y-2">
-        <Label className="text-muted-foreground font-mono text-xs">AUDIT INFO</Label>
+        <Label className="text-muted-foreground font-mono text-xs">DEFAULT AUDIT INFO</Label>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-muted-foreground font-mono text-[10px]">APPLICATOR</Label>
@@ -316,11 +366,7 @@ function RecipeForm({
           </div>
         </div>
         <div>
-          <Label className="text-muted-foreground font-mono text-[10px]">EPA REG. NUMBER</Label>
-          <Input value={epaRegNumber} onChange={e => setEpaRegNumber(e.target.value)} placeholder="e.g. 524-549" className="mt-0.5 bg-muted border-border text-foreground text-sm" />
-        </div>
-        <div>
-          <Label className="text-muted-foreground font-mono text-[10px]">TARGET PEST</Label>
+          <Label className="text-muted-foreground font-mono text-[10px]">GENERAL TARGET PEST</Label>
           <Input value={targetPest} onChange={e => setTargetPest(e.target.value)} placeholder="e.g. Broadleaf weeds" className="mt-0.5 bg-muted border-border text-foreground text-sm" />
         </div>
       </div>

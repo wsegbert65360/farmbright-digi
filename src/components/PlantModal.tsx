@@ -5,42 +5,65 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFarm } from '@/store/farmStore';
-import { Field } from '@/types/farm';
+import { Field, PlantRecord } from '@/types/farm';
 import { Sprout } from 'lucide-react';
 
 interface PlantModalProps {
   field: Field;
   open: boolean;
   onClose: () => void;
+  initialData?: PlantRecord;
 }
 
-export default function PlantModal({ field, open, onClose }: PlantModalProps) {
-  const { addPlantRecord, savedSeeds } = useFarm();
-  const [seedVariety, setSeedVariety] = useState('');
-  const [crop, setCrop] = useState('');
-  const [fsaFarm, setFsaFarm] = useState('');
-  const [fsaTract, setFsaTract] = useState('');
-  const [intendedUse, setIntendedUse] = useState('');
-  const [plantDate, setPlantDate] = useState(new Date().toISOString().split('T')[0]);
+export default function PlantModal({ field, open, onClose, initialData }: PlantModalProps) {
+  const { addPlantRecord, updatePlantRecord, savedSeeds } = useFarm();
+  const [seedVariety, setSeedVariety] = useState(initialData?.seedVariety || '');
+  const [crop, setCrop] = useState(initialData?.crop || '');
+  const [fsaFarm, setFsaFarm] = useState(initialData?.fsaFarmNumber || '');
+  const [fsaTract, setFsaTract] = useState(initialData?.fsaTractNumber || '');
+  const [intendedUse, setIntendedUse] = useState(initialData?.intendedUse || field.intendedUse || '');
+  const [producerShare, setProducerShare] = useState(initialData?.producerShare?.toString() || field.producerShare?.toString() || '100');
+  const [irrigationPractice, setIrrigationPractice] = useState<'Irrigated' | 'Non-Irrigated'>(initialData?.irrigationPractice || field.irrigationPractice || 'Non-Irrigated');
+  const [plantDate, setPlantDate] = useState(initialData?.plantDate || new Date().toISOString().split('T')[0]);
 
   const handleSubmit = () => {
     if (!seedVariety.trim()) return;
-    addPlantRecord({
-      fieldId: field.id,
-      fieldName: field.name,
-      seedVariety: seedVariety.trim(),
-      acreage: field.acreage,
-      crop: crop.trim() || undefined,
-      fsaFarmNumber: fsaFarm.trim() || undefined,
-      fsaTractNumber: fsaTract.trim() || undefined,
-      intendedUse: intendedUse.trim() || undefined,
-      plantDate: plantDate || undefined,
-    });
-    setSeedVariety('');
-    setCrop('');
-    setFsaFarm('');
-    setFsaTract('');
-    setIntendedUse('');
+
+    if (initialData) {
+      updatePlantRecord({
+        ...initialData,
+        seedVariety: seedVariety.trim(),
+        crop: crop.trim() || undefined,
+        fsaFarmNumber: fsaFarm.trim() || undefined,
+        fsaTractNumber: fsaTract.trim() || undefined,
+        intendedUse: intendedUse.trim() || undefined,
+        plantDate: plantDate || undefined,
+        producerShare: parseFloat(producerShare) || 100,
+        irrigationPractice,
+      });
+    } else {
+      addPlantRecord({
+        fieldId: field.id,
+        fieldName: field.name,
+        seedVariety: seedVariety.trim(),
+        acreage: field.acreage,
+        crop: crop.trim() || undefined,
+        fsaFarmNumber: fsaFarm.trim() || undefined,
+        fsaTractNumber: fsaTract.trim() || undefined,
+        intendedUse: intendedUse.trim() || undefined,
+        plantDate: plantDate || undefined,
+        producerShare: parseFloat(producerShare) || 100,
+        irrigationPractice,
+      });
+    }
+
+    if (!initialData) {
+      setSeedVariety('');
+      setCrop('');
+      setFsaFarm('');
+      setFsaTract('');
+      setIntendedUse('');
+    }
     onClose();
   };
 
@@ -50,7 +73,7 @@ export default function PlantModal({ field, open, onClose }: PlantModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-plant">
             <Sprout size={20} />
-            Plant — {field.name}
+            {initialData ? 'Edit' : 'Plant'} — {field.name}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -115,19 +138,51 @@ export default function PlantModal({ field, open, onClose }: PlantModalProps) {
               />
             </div>
           </div>
-          <div>
-            <Label className="text-muted-foreground font-mono text-xs">INTENDED USE</Label>
-            <Input
-              value={intendedUse}
-              onChange={e => setIntendedUse(e.target.value)}
-              placeholder="e.g. Grain, Silage, Cover"
-              className="mt-1 bg-muted border-border text-foreground"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs">INTENDED USE</Label>
+              <Input
+                value={intendedUse}
+                onChange={e => setIntendedUse(e.target.value)}
+                placeholder="e.g. Grain"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs text-right block">ACREAGE</Label>
+              <div className="mt-1 px-3 py-2 bg-muted/50 border border-border/30 rounded-md font-mono text-foreground text-center text-sm">
+                {field.acreage} ac
+              </div>
+            </div>
           </div>
-          <div>
-            <Label className="text-muted-foreground font-mono text-xs">ACREAGE</Label>
-            <div className="mt-1 px-3 py-2 bg-muted rounded-md font-mono text-foreground">
-              {field.acreage} ac
+
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/20">
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs">IRRIGATION Practice *</Label>
+              <Select value={irrigationPractice} onValueChange={(v: any) => setIrrigationPractice(v)}>
+                <SelectTrigger className="mt-1 bg-muted border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Non-Irrigated">Non-Irrigated (NI)</SelectItem>
+                  <SelectItem value="Irrigated">Irrigated (IR)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs">PRODUCER SHARE % *</Label>
+              <Input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={producerShare}
+                onChange={e => setProducerShare(e.target.value)}
+                className="mt-1 bg-muted border-border text-foreground font-mono"
+              />
+              <div className="text-[10px] text-muted-foreground mt-0.5 text-right font-mono uppercase">
+                FSA 578 Certification
+              </div>
             </div>
           </div>
         </div>
@@ -137,7 +192,7 @@ export default function PlantModal({ field, open, onClose }: PlantModalProps) {
             disabled={!seedVariety.trim()}
             className="touch-target w-full bg-plant text-plant-foreground hover:bg-plant/90 glow-plant font-bold"
           >
-            Log Planting
+            {initialData ? 'Update Record' : 'Log Planting'}
           </Button>
         </DialogFooter>
       </DialogContent>

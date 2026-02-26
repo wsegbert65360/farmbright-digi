@@ -5,36 +5,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFarm } from '@/store/farmStore';
-import { Field } from '@/types/farm';
+import { Field, HarvestRecord } from '@/types/farm';
 import { Wheat, Warehouse, Truck } from 'lucide-react';
 
 interface HarvestModalProps {
   field: Field;
   open: boolean;
   onClose: () => void;
+  initialData?: HarvestRecord;
 }
 
-export default function HarvestModal({ field, open, onClose }: HarvestModalProps) {
-  const { addHarvestRecord, addGrainMovement, bins } = useFarm();
-  const [destination, setDestination] = useState<'bin' | 'town' | null>(null);
-  const [binId, setBinId] = useState('');
-  const [moisture, setMoisture] = useState('');
-  const [landlordSplit, setLandlordSplit] = useState('');
-  const [bushels, setBushels] = useState('');
-  const [crop, setCrop] = useState('');
-  const [fsaFarm, setFsaFarm] = useState(field.fsaFarmNumber || '');
-  const [fsaTract, setFsaTract] = useState(field.fsaTractNumber || '');
-  const [harvestDate, setHarvestDate] = useState(new Date().toISOString().split('T')[0]);
+export default function HarvestModal({ field, open, onClose, initialData }: HarvestModalProps) {
+  const { addHarvestRecord, updateHarvestRecord, addGrainMovement, updateGrainMovement, grainMovements, bins } = useFarm();
+  const [destination, setDestination] = useState<'bin' | 'town' | null>(initialData?.destination || null);
+  const [binId, setBinId] = useState(initialData?.binId || '');
+  const [moisture, setMoisture] = useState(initialData?.moisturePercent?.toString() || '');
+  const [landlordSplit, setLandlordSplit] = useState(initialData?.landlordSplitPercent?.toString() || '');
+  const [bushels, setBushels] = useState(initialData?.bushels?.toString() || '');
+  const [crop, setCrop] = useState(initialData?.crop || '');
+  const [fsaFarm, setFsaFarm] = useState(initialData?.fsaFarmNumber || field.fsaFarmNumber || '');
+  const [fsaTract, setFsaTract] = useState(initialData?.fsaTractNumber || field.fsaTractNumber || '');
+  const [harvestDate, setHarvestDate] = useState(initialData?.harvestDate || new Date().toISOString().split('T')[0]);
 
   const reset = () => {
-    setDestination(null);
-    setBinId('');
-    setMoisture('');
-    setLandlordSplit('');
-    setBushels('');
-    setCrop('');
-    setFsaFarm(field.fsaFarmNumber || '');
-    setFsaTract(field.fsaTractNumber || '');
+    if (!initialData) {
+      setDestination(null);
+      setBinId('');
+      setMoisture('');
+      setLandlordSplit('');
+      setBushels('');
+      setCrop('');
+    }
   };
 
   const handleSubmit = () => {
@@ -44,7 +45,7 @@ export default function HarvestModal({ field, open, onClose }: HarvestModalProps
     if (isNaN(m) || isNaN(ls) || isNaN(bu) || !destination) return;
     if (destination === 'bin' && !binId) return;
 
-    addHarvestRecord({
+    const harvestData = {
       fieldId: field.id,
       fieldName: field.name,
       destination,
@@ -56,18 +57,54 @@ export default function HarvestModal({ field, open, onClose }: HarvestModalProps
       fsaFarmNumber: fsaFarm.trim() || undefined,
       fsaTractNumber: fsaTract.trim() || undefined,
       harvestDate: harvestDate || undefined,
-    });
+    };
 
-    if (destination === 'bin') {
-      const bin = bins.find(b => b.id === binId);
-      addGrainMovement({
-        binId,
-        binName: bin?.name || 'Unknown',
-        type: 'in',
-        bushels: bu,
-        moisturePercent: m,
-        sourceFieldName: field.name,
-      });
+    if (initialData) {
+      updateHarvestRecord({ ...initialData, ...harvestData });
+
+      // Sync linked grain movement
+      if (initialData.destination === 'bin') {
+        const movement = grainMovements.find(gm =>
+          gm.sourceFieldName === field.name &&
+          gm.timestamp === initialData.timestamp &&
+          gm.type === 'in'
+        );
+        if (movement) {
+          const bin = bins.find(b => b.id === binId);
+          updateGrainMovement({
+            ...movement,
+            binId: binId,
+            binName: bin?.name || 'Unknown',
+            bushels: bu,
+            moisturePercent: m,
+          });
+        }
+      } else if (destination === 'bin') {
+        const bin = bins.find(b => b.id === binId);
+        addGrainMovement({
+          binId,
+          binName: bin?.name || 'Unknown',
+          type: 'in',
+          bushels: bu,
+          moisturePercent: m,
+          sourceFieldName: field.name,
+          timestamp: initialData.timestamp
+        });
+      }
+    } else {
+      addHarvestRecord(harvestData);
+      if (destination === 'bin') {
+        const bin = bins.find(b => b.id === binId);
+        addGrainMovement({
+          binId,
+          binName: bin?.name || 'Unknown',
+          type: 'in',
+          bushels: bu,
+          moisturePercent: m,
+          sourceFieldName: field.name,
+          timestamp: Date.now()
+        });
+      }
     }
 
     reset();
@@ -77,12 +114,12 @@ export default function HarvestModal({ field, open, onClose }: HarvestModalProps
   const valid = destination && moisture && landlordSplit && bushels && (destination === 'town' || binId);
 
   return (
-    <Dialog open={open} onOpenChange={() => { reset(); onClose(); }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { reset(); onClose(); } }}>
       <DialogContent className="bg-card border-harvest/30 max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-harvest">
             <Wheat size={20} />
-            Harvest — {field.name}
+            {initialData ? 'Edit' : 'Harvest'} — {field.name}
           </DialogTitle>
         </DialogHeader>
 
@@ -208,7 +245,7 @@ export default function HarvestModal({ field, open, onClose }: HarvestModalProps
               disabled={!valid}
               className="touch-target flex-1 bg-harvest text-harvest-foreground hover:bg-harvest/90 glow-harvest font-bold"
             >
-              Log Harvest
+              {initialData ? 'Update Record' : 'Log Harvest'}
             </Button>
           </DialogFooter>
         )}

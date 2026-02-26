@@ -8,7 +8,8 @@ import { useFieldRainfall } from '@/hooks/useFieldRainfall';
 import { Tractor, Settings } from 'lucide-react';
 
 const Index = () => {
-  const { fields } = useFarm();
+  const { fields: allFields } = useFarm();
+  const fields = allFields.filter(f => !f.deleted_at);
   const [managing, setManaging] = useState(false);
   const { rain, loading: rainLoading } = useFieldRainfall(fields);
 
@@ -27,9 +28,8 @@ const Index = () => {
           </div>
           <button
             onClick={() => setManaging(!managing)}
-            className={`p-2.5 rounded-lg border transition-colors ${
-              managing ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
-            }`}
+            className={`p-2.5 rounded-lg border transition-colors ${managing ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
           >
             <Settings size={20} />
           </button>

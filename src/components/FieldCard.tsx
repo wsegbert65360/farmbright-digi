@@ -3,7 +3,8 @@ import { Field } from '@/types/farm';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
-import { Sprout, Droplets, Wheat, MapPin, CloudRain, Loader2 } from 'lucide-react';
+import { Sprout, Droplets, Wheat, MapPin, CloudRain, Loader2, Tractor } from 'lucide-react';
+import HayModal from '@/components/HayModal';
 
 interface FieldCardProps {
   field: Field;
@@ -12,7 +13,7 @@ interface FieldCardProps {
 }
 
 export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProps) {
-  const [modal, setModal] = useState<'plant' | 'spray' | 'harvest' | null>(null);
+  const [modal, setModal] = useState<'plant' | 'spray' | 'harvest' | 'hay' | null>(null);
 
   return (
     <>
@@ -37,27 +38,34 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             ) : null}
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button
             onClick={() => setModal('plant')}
             className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-plant/10 border border-plant/20 hover:bg-plant/20 text-plant transition-all active:scale-95 py-3"
           >
-            <Sprout size={22} strokeWidth={2} />
-            <span className="font-mono text-xs font-semibold">Plant</span>
+            <Sprout size={20} strokeWidth={2} />
+            <span className="font-mono text-[10px] uppercase font-bold">Plant</span>
           </button>
           <button
             onClick={() => setModal('spray')}
             className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-95 py-3"
           >
-            <Droplets size={22} strokeWidth={2} />
-            <span className="font-mono text-xs font-semibold">Spray</span>
+            <Droplets size={20} strokeWidth={2} />
+            <span className="font-mono text-[10px] uppercase font-bold">Spray</span>
           </button>
           <button
             onClick={() => setModal('harvest')}
             className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-95 py-3"
           >
-            <Wheat size={22} strokeWidth={2} />
-            <span className="font-mono text-xs font-semibold">Harvest</span>
+            <Wheat size={20} strokeWidth={2} />
+            <span className="font-mono text-[10px] uppercase font-bold">Grain</span>
+          </button>
+          <button
+            onClick={() => setModal('hay')}
+            className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-95 py-3"
+          >
+            <Tractor size={20} strokeWidth={2} />
+            <span className="font-mono text-[10px] uppercase font-bold">Hay</span>
           </button>
         </div>
       </div>
@@ -65,6 +73,7 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
       <PlantModal field={field} open={modal === 'plant'} onClose={() => setModal(null)} />
       <SprayModal field={field} open={modal === 'spray'} onClose={() => setModal(null)} />
       <HarvestModal field={field} open={modal === 'harvest'} onClose={() => setModal(null)} />
+      <HayModal field={field} open={modal === 'hay'} onClose={() => setModal(null)} />
     </>
   );
 }

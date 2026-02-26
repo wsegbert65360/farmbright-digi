@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FarmProvider, useFarm } from "@/store/farmStore";
 import { Auth } from "@/components/Auth";
+import SeasonRolloverModal from "@/components/SeasonRolloverModal";
 import Index from "./pages/Index";
 import Logistics from "./pages/Logistics";
 import Activity from "./pages/Activity";
@@ -39,6 +40,8 @@ const AppContent = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <SeasonRolloverModal />
+      <SeasonRolloverModal />
     </BrowserRouter>
   );
 };
