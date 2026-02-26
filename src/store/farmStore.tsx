@@ -128,182 +128,361 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (session) {
       const fetchData = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('farm_data')
-          .single();
+        try {
+          // Fetch all data in parallel from structured tables
+          const [
+            { data: fieldsData },
+            { data: binsData },
+            { data: plantData },
+            { data: sprayData },
+            { data: harvestData },
+            { data: hayData },
+            { data: grainData },
+            { data: seedsData },
+            { data: recipesData },
+            { data: profileData }
+          ] = await Promise.all([
+            supabase.from('fields').select('*'),
+            supabase.from('bins').select('*'),
+            supabase.from('plant_records').select('*'),
+            supabase.from('spray_records').select('*'),
+            supabase.from('harvest_records').select('*'),
+            supabase.from('hay_harvest_records').select('*'),
+            supabase.from('grain_movements').select('*'),
+            supabase.from('saved_seeds').select('*'),
+            supabase.from('spray_recipes').select('*'),
+            supabase.from('profiles').select('farm_id, active_season').single()
+          ]);
 
-        if (data?.farm_data) {
-          const farmData = data.farm_data;
-          if (farmData.fields) setFields(farmData.fields);
-          if (farmData.bins) setBins(farmData.bins);
-          if (farmData.plantRecords) setPlantRecords(farmData.plantRecords);
-          if (farmData.sprayRecords) setSprayRecords(farmData.sprayRecords);
-          if (farmData.harvestRecords) setHarvestRecords(farmData.harvestRecords);
-          if (farmData.hayHarvestRecords) setHayHarvestRecords(farmData.hayHarvestRecords);
-          if (farmData.grainMovements) setGrainMovements(farmData.grainMovements);
-          if (farmData.savedSeeds) setSavedSeeds(farmData.savedSeeds);
-          if (farmData.sprayRecipes) setSprayRecipes(farmData.sprayRecipes);
-          if (farmData.activeSeason) {
-            setActiveSeason(farmData.activeSeason);
-            setViewingSeason(farmData.activeSeason);
+          if (fieldsData) setFields(fieldsData);
+          if (binsData) setBins(binsData);
+          if (plantData) setPlantRecords(plantData);
+          if (sprayData) setSprayRecords(sprayData);
+          if (harvestData) setHarvestRecords(harvestData);
+          if (hayData) setHayHarvestRecords(hayData);
+          if (grainData) setGrainMovements(grainData);
+          if (seedsData) setSavedSeeds(seedsData);
+          if (recipesData) setSprayRecipes(recipesData);
+
+          if (profileData) {
+            if (profileData.farm_id) setFarmId(profileData.farm_id);
+            if (profileData.active_season) {
+              setActiveSeason(profileData.active_season);
+              setViewingSeason(profileData.active_season);
+            }
           }
-          if (farmData.farm_id) setFarmId(farmData.farm_id);
-        } else if (!error && !data) {
-          await syncToCloud();
+        } catch (error) {
+          console.error('Error fetching farm data:', error);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
       fetchData();
     }
   }, [session]);
 
-  const syncToCloud = useCallback(async () => {
-    if (!session) return;
-
-    const farmData = {
-      fields,
-      bins,
-      plantRecords,
-      sprayRecords,
-      harvestRecords,
-      hayHarvestRecords,
-      grainMovements,
-      savedSeeds,
-      sprayRecipes,
-      activeSeason,
-      farm_id,
-    };
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: session.user.id,
-        farm_data: farmData,
-        updated_at: new Date().toISOString()
-      });
-
-    if (error) console.error('Error syncing to cloud:', error);
-  }, [session, fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason]);
-
-  // Save to storage (local and cloud)
-  useEffect(() => {
-    saveToStorage('ff_fields', fields);
-    if (session) syncToCloud();
-  }, [fields, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_bins', bins);
-    if (session) syncToCloud();
-  }, [bins, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_plant', plantRecords);
-    if (session) syncToCloud();
-  }, [plantRecords, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_spray', sprayRecords);
-    if (session) syncToCloud();
-  }, [sprayRecords, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_harvest', harvestRecords);
-    if (session) syncToCloud();
-  }, [harvestRecords, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_hay', hayHarvestRecords);
-    if (session) syncToCloud();
-  }, [hayHarvestRecords, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_grain', grainMovements);
-    if (session) syncToCloud();
-  }, [grainMovements, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_seeds', savedSeeds);
-    if (session) syncToCloud();
-  }, [savedSeeds, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_recipes', sprayRecipes);
-    if (session) syncToCloud();
-  }, [sprayRecipes, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_active_season', activeSeason);
-    if (session) syncToCloud();
-  }, [activeSeason, session]);
-
-  useEffect(() => {
-    saveToStorage('ff_farm_id', farm_id);
-    if (session) syncToCloud();
-  }, [farm_id, session]);
+  // Note: Local storage persistence is maintained for offline resilience, 
+  // but cloud sync is now handled individually by each CRUD operation.
+  useEffect(() => { saveToStorage('ff_fields', fields); }, [fields]);
+  useEffect(() => { saveToStorage('ff_bins', bins); }, [bins]);
+  useEffect(() => { saveToStorage('ff_plant', plantRecords); }, [plantRecords]);
+  useEffect(() => { saveToStorage('ff_spray', sprayRecords); }, [sprayRecords]);
+  useEffect(() => { saveToStorage('ff_harvest', harvestRecords); }, [harvestRecords]);
+  useEffect(() => { saveToStorage('ff_hay', hayHarvestRecords); }, [hayHarvestRecords]);
+  useEffect(() => { saveToStorage('ff_grain', grainMovements); }, [grainMovements]);
+  useEffect(() => { saveToStorage('ff_seeds', savedSeeds); }, [savedSeeds]);
+  useEffect(() => { saveToStorage('ff_recipes', sprayRecipes); }, [sprayRecipes]);
+  useEffect(() => { saveToStorage('ff_active_season', activeSeason); }, [activeSeason]);
+  useEffect(() => { saveToStorage('ff_farm_id', farm_id); }, [farm_id]);
 
   const uid = () => crypto.randomUUID();
 
-  const addPlantRecord = useCallback((r: Omit<PlantRecord, 'id' | 'timestamp'>) => {
-    setPlantRecords(prev => [...prev, { ...r, id: uid(), timestamp: Date.now(), seasonYear: activeSeason }]);
+  const addPlantRecord = useCallback(async (r: Omit<PlantRecord, 'id' | 'timestamp'>) => {
+    const id = uid();
+    const timestamp = Date.now();
+    const newRecord: PlantRecord = { ...r, id, timestamp, seasonYear: activeSeason };
+
+    // Optimistic update
+    setPlantRecords(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('plant_records').insert([{
+      id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      seed_variety: r.seedVariety,
+      acreage: r.acreage,
+      crop: r.crop,
+      plant_date: r.plantDate,
+      season_year: activeSeason,
+      timestamp: new Date(timestamp).toISOString()
+    }]);
+
+    if (error) {
+      console.error('Error adding plant record:', error);
+      // Revert optimistic update on error
+      setPlantRecords(prev => prev.filter(rec => rec.id !== id));
+    }
   }, [activeSeason]);
 
-  const updatePlantRecord = useCallback((r: PlantRecord) => {
+  const updatePlantRecord = useCallback(async (r: PlantRecord) => {
     setPlantRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('plant_records').upsert({
+      id: r.id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      seed_variety: r.seedVariety,
+      acreage: r.acreage,
+      crop: r.crop,
+      plant_date: r.plantDate,
+      season_year: r.seasonYear,
+      timestamp: new Date(r.timestamp).toISOString()
+    });
+
+    if (error) console.error('Error updating plant record:', error);
   }, []);
 
-  const addSprayRecord = useCallback((r: Omit<SprayRecord, 'id' | 'timestamp'>) => {
-    setSprayRecords(prev => [...prev, { ...r, id: uid(), timestamp: Date.now(), seasonYear: activeSeason }]);
+  const addSprayRecord = useCallback(async (r: Omit<SprayRecord, 'id' | 'timestamp'>) => {
+    const id = uid();
+    const timestamp = Date.now();
+    const newRecord: SprayRecord = { ...r, id, timestamp, seasonYear: activeSeason };
+
+    setSprayRecords(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('spray_records').insert([{
+      id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      product: r.product,
+      products: r.products,
+      wind_speed: r.windSpeed,
+      temperature: r.temperature,
+      spray_date: r.sprayDate,
+      start_time: r.startTime,
+      equipment_id: r.equipmentId,
+      applicator_name: r.applicatorName,
+      license_number: r.licenseNumber,
+      epa_reg_number: r.epaRegNumber,
+      season_year: activeSeason,
+      timestamp: new Date(timestamp).toISOString()
+    }]);
+
+    if (error) {
+      console.error('Error adding spray record:', error);
+      setSprayRecords(prev => prev.filter(rec => rec.id !== id));
+    }
   }, [activeSeason]);
 
-  const updateSprayRecord = useCallback((r: SprayRecord) => {
+  const updateSprayRecord = useCallback(async (r: SprayRecord) => {
     setSprayRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('spray_records').upsert({
+      id: r.id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      product: r.product,
+      products: r.products,
+      wind_speed: r.windSpeed,
+      temperature: r.temperature,
+      spray_date: r.sprayDate,
+      start_time: r.startTime,
+      equipment_id: r.equipmentId,
+      applicator_name: r.applicatorName,
+      license_number: r.licenseNumber,
+      epa_reg_number: r.epaRegNumber,
+      season_year: r.seasonYear,
+      timestamp: new Date(r.timestamp).toISOString()
+    });
+
+    if (error) console.error('Error updating spray record:', error);
   }, []);
 
-  const addHarvestRecord = useCallback((r: Omit<HarvestRecord, 'id' | 'timestamp'>) => {
-    setHarvestRecords(prev => [...prev, { ...r, id: uid(), timestamp: Date.now(), seasonYear: activeSeason }]);
+  const addHarvestRecord = useCallback(async (r: Omit<HarvestRecord, 'id' | 'timestamp'>) => {
+    const id = uid();
+    const timestamp = Date.now();
+    const newRecord: HarvestRecord = { ...r, id, timestamp, seasonYear: activeSeason };
+
+    setHarvestRecords(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('harvest_records').insert([{
+      id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      destination: r.destination,
+      bin_id: r.binId,
+      bushels: r.bushels,
+      moisture_percent: r.moisturePercent,
+      landlord_split_percent: r.landlordSplitPercent,
+      harvest_date: r.harvestDate,
+      season_year: activeSeason,
+      timestamp: new Date(timestamp).toISOString()
+    }]);
+
+    if (error) {
+      console.error('Error adding harvest record:', error);
+      setHarvestRecords(prev => prev.filter(rec => rec.id !== id));
+    }
   }, [activeSeason]);
 
-  const updateHarvestRecord = useCallback((r: HarvestRecord) => {
+  const updateHarvestRecord = useCallback(async (r: HarvestRecord) => {
     setHarvestRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('harvest_records').upsert({
+      id: r.id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      destination: r.destination,
+      bin_id: r.binId,
+      bushels: r.bushels,
+      moisture_percent: r.moisturePercent,
+      landlord_split_percent: r.landlordSplitPercent,
+      harvest_date: r.harvestDate,
+      season_year: r.seasonYear,
+      timestamp: new Date(r.timestamp).toISOString()
+    });
+
+    if (error) console.error('Error updating harvest record:', error);
   }, []);
 
-  const addHayHarvestRecord = useCallback((r: Omit<HayHarvestRecord, 'id' | 'timestamp'>) => {
-    setHayHarvestRecords(prev => [...prev, { ...r, id: uid(), timestamp: Date.now(), seasonYear: activeSeason }]);
+  const addHayHarvestRecord = useCallback(async (r: Omit<HayHarvestRecord, 'id' | 'timestamp'>) => {
+    const id = uid();
+    const timestamp = Date.now();
+    const newRecord: HayHarvestRecord = { ...r, id, timestamp, seasonYear: activeSeason };
+
+    setHayHarvestRecords(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('hay_harvest_records').insert([{
+      id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      date: r.date,
+      bale_count: r.baleCount,
+      cutting_number: r.cuttingNumber,
+      bale_type: r.baleType,
+      temperature: r.temperature,
+      conditions: r.conditions,
+      season_year: activeSeason,
+      timestamp: new Date(timestamp).toISOString()
+    }]);
+
+    if (error) {
+      console.error('Error adding hay harvest record:', error);
+      setHayHarvestRecords(prev => prev.filter(rec => rec.id !== id));
+    }
   }, [activeSeason]);
 
-  const updateHayHarvestRecord = useCallback((r: HayHarvestRecord) => {
+  const updateHayHarvestRecord = useCallback(async (r: HayHarvestRecord) => {
     setHayHarvestRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('hay_harvest_records').upsert({
+      id: r.id,
+      field_id: r.fieldId,
+      field_name: r.fieldName,
+      date: r.date,
+      bale_count: r.baleCount,
+      cutting_number: r.cuttingNumber,
+      bale_type: r.baleType,
+      temperature: r.temperature,
+      conditions: r.conditions,
+      season_year: r.seasonYear,
+      timestamp: new Date(r.timestamp).toISOString()
+    });
+
+    if (error) console.error('Error updating hay harvest record:', error);
   }, []);
 
-  const addGrainMovement = useCallback((r: Omit<GrainMovement, 'id'> & { timestamp?: number }) => {
-    setGrainMovements(prev => [...prev, { ...r, id: uid(), timestamp: r.timestamp || Date.now(), seasonYear: activeSeason }]);
+  const addGrainMovement = useCallback(async (r: Omit<GrainMovement, 'id'> & { timestamp?: number }) => {
+    const id = uid();
+    const timestamp = r.timestamp || Date.now();
+    const newRecord: GrainMovement = { ...r, id, timestamp, seasonYear: activeSeason };
+
+    setGrainMovements(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('grain_movements').insert([{
+      id,
+      bin_id: r.binId,
+      bin_name: r.binName,
+      type: r.type,
+      bushels: r.bushels,
+      moisture_percent: r.moisturePercent,
+      source_field_name: r.sourceFieldName,
+      destination: r.destination,
+      price: r.price,
+      season_year: activeSeason,
+      timestamp: new Date(timestamp).toISOString()
+    }]);
+
+    if (error) {
+      console.error('Error adding grain movement:', error);
+      setGrainMovements(prev => prev.filter(rec => rec.id !== id));
+    }
   }, [activeSeason]);
 
-  const updateGrainMovement = useCallback((r: GrainMovement) => {
+  const updateGrainMovement = useCallback(async (r: GrainMovement) => {
     setGrainMovements(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('grain_movements').upsert({
+      id: r.id,
+      bin_id: r.binId,
+      bin_name: r.binName,
+      type: r.type,
+      bushels: r.bushels,
+      moisture_percent: r.moisturePercent,
+      source_field_name: r.sourceFieldName,
+      destination: r.destination,
+      price: r.price,
+      season_year: r.seasonYear,
+      timestamp: new Date(r.timestamp).toISOString()
+    });
+
+    if (error) console.error('Error updating grain movement:', error);
   }, []);
 
-  const deleteGrainMovements = useCallback((ids: string[]) => {
+  const deleteGrainMovements = useCallback(async (ids: string[]) => {
     setGrainMovements(prev => prev.filter(r => !ids.includes(r.id)));
+    const { error } = await supabase
+      .from('grain_movements')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) console.error('Error deleting grain movements:', error);
   }, []);
 
-  const deletePlantRecords = useCallback((ids: string[]) => {
+  const deletePlantRecords = useCallback(async (ids: string[]) => {
     setPlantRecords(prev => prev.filter(r => !ids.includes(r.id)));
+    const { error } = await supabase
+      .from('plant_records')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) console.error('Error deleting plant records:', error);
   }, []);
 
-  const deleteSprayRecords = useCallback((ids: string[]) => {
+  const deleteSprayRecords = useCallback(async (ids: string[]) => {
     setSprayRecords(prev => prev.map(r =>
       ids.includes(r.id) ? { ...r, deleted_at: new Date().toISOString() } : r
     ));
+    const { error } = await supabase
+      .from('spray_records')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) console.error('Error deleting spray records:', error);
   }, []);
 
-  const deleteHarvestRecords = useCallback((ids: string[]) => {
+  const deleteHarvestRecords = useCallback(async (ids: string[]) => {
     setHarvestRecords(prev => prev.filter(r => !ids.includes(r.id)));
+    const { error } = await supabase
+      .from('harvest_records')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) console.error('Error deleting harvest records:', error);
   }, []);
 
-  const deleteHayHarvestRecords = useCallback((ids: string[]) => {
+  const deleteHayHarvestRecords = useCallback(async (ids: string[]) => {
     setHayHarvestRecords(prev => prev.filter(r => !ids.includes(r.id)));
+    const { error } = await supabase
+      .from('hay_harvest_records')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) console.error('Error deleting hay harvest records:', error);
   }, []);
 
   const getBinTotal = useCallback((binId: string) => {
@@ -312,52 +491,78 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .reduce((total, m) => total + (m.type === 'in' ? m.bushels : -m.bushels), 0);
   }, [grainMovements]);
 
-  const addField = useCallback((f: Omit<Field, 'id'>) => {
-    setFields(prev => [...prev, { ...f, id: uid() }]);
+  const addField = useCallback(async (f: Omit<Field, 'id'>) => {
+    const id = uid();
+    setFields(prev => [...prev, { ...f, id }]);
+    const { error } = await supabase.from('fields').insert([{ id, ...f }]);
+    if (error) console.error('Error adding field:', error);
   }, []);
 
-  const updateField = useCallback((f: Field) => {
+  const updateField = useCallback(async (f: Field) => {
     setFields(prev => prev.map(existing => existing.id === f.id ? f : existing));
+    const { error } = await supabase.from('fields').upsert(f);
+    if (error) console.error('Error updating field:', error);
   }, []);
 
-  const deleteField = useCallback((id: string) => {
+  const deleteField = useCallback(async (id: string) => {
     setFields(prev => prev.map(f =>
       f.id === id ? { ...f, deleted_at: new Date().toISOString() } : f
     ));
+    const { error } = await supabase.from('fields').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.error('Error deleting field:', error);
   }, []);
 
-  const addBin = useCallback((b: Omit<Bin, 'id'>) => {
-    setBins(prev => [...prev, { ...b, id: uid() }]);
+  const addBin = useCallback(async (b: Omit<Bin, 'id'>) => {
+    const id = uid();
+    setBins(prev => [...prev, { ...b, id }]);
+    const { error } = await supabase.from('bins').insert([{ id, ...b }]);
+    if (error) console.error('Error adding bin:', error);
   }, []);
 
-  const updateBin = useCallback((b: Bin) => {
+  const updateBin = useCallback(async (b: Bin) => {
     setBins(prev => prev.map(existing => existing.id === b.id ? b : existing));
+    const { error } = await supabase.from('bins').upsert(b);
+    if (error) console.error('Error updating bin:', error);
   }, []);
 
-  const deleteBin = useCallback((id: string) => {
+  const deleteBin = useCallback(async (id: string) => {
     setBins(prev => prev.map(b =>
       b.id === id ? { ...b, deleted_at: new Date().toISOString() } : b
     ));
+    const { error } = await supabase.from('bins').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.error('Error deleting bin:', error);
   }, []);
 
-  const addSeed = useCallback((name: string) => {
-    setSavedSeeds(prev => [...prev, { id: uid(), name }]);
+  const addSeed = useCallback(async (name: string) => {
+    const id = uid();
+    setSavedSeeds(prev => [...prev, { id, name }]);
+    const { error } = await supabase.from('saved_seeds').insert([{ id, name }]);
+    if (error) console.error('Error adding seed:', error);
   }, []);
 
-  const deleteSeed = useCallback((id: string) => {
+  const deleteSeed = useCallback(async (id: string) => {
     setSavedSeeds(prev => prev.filter(s => s.id !== id));
+    const { error } = await supabase.from('saved_seeds').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.error('Error deleting seed:', error);
   }, []);
 
-  const addSprayRecipe = useCallback((r: Omit<SprayRecipe, 'id'>) => {
-    setSprayRecipes(prev => [...prev, { ...r, id: uid() }]);
+  const addSprayRecipe = useCallback(async (r: Omit<SprayRecipe, 'id'>) => {
+    const id = uid();
+    setSprayRecipes(prev => [...prev, { ...r, id }]);
+    const { error } = await supabase.from('spray_recipes').insert([{ id, ...r }]);
+    if (error) console.error('Error adding spray recipe:', error);
   }, []);
 
-  const updateSprayRecipe = useCallback((r: SprayRecipe) => {
+  const updateSprayRecipe = useCallback(async (r: SprayRecipe) => {
     setSprayRecipes(prev => prev.map(existing => existing.id === r.id ? r : existing));
+    const { error } = await supabase.from('spray_recipes').upsert(r);
+    if (error) console.error('Error updating spray recipe:', error);
   }, []);
 
-  const deleteSprayRecipe = useCallback((id: string) => {
+  const deleteSprayRecipe = useCallback(async (id: string) => {
     setSprayRecipes(prev => prev.filter(r => r.id !== id));
+    const { error } = await supabase.from('spray_recipes').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.error('Error deleting spray recipe:', error);
   }, []);
 
   const seedDemoData = useCallback(() => {
@@ -496,10 +701,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setGrainMovements(allRecords.grain);
   }, [fields]);
 
-  const rolloverToNewSeason = useCallback((year: number) => {
-    // 1. Force Backup (Database Hardening)
+  const rolloverToNewSeason = useCallback(async (year: number) => {
+    // 1. Force Backup (JSON export)
     const backupData = {
-      fields, bins, plantRecords, sprayRecords, harvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason,
+      fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason,
       rolloverDate: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -510,16 +715,18 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     a.click();
     URL.revokeObjectURL(url);
 
-    // 2. Archive & Reset
-    // We already tagged everything with seasonYear, so we just reset the active season marker
-    // and clear fields that shouldn't persist if they are season-specific.
-    // The prompt says "clear active dashboard", so we'll actually keep the historical records 
-    // in the state but the UI will filter them by activeSeason soon.
-
-    // Update active season
+    // 2. Update active season in local state and Supabase
     setActiveSeason(year);
     setViewingSeason(year);
-  }, [fields, bins, plantRecords, sprayRecords, harvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason]);
+
+    if (session) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ active_season: year })
+        .eq('id', session.user.id);
+      if (error) console.error('Error updating active season:', error);
+    }
+  }, [fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason, session]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
