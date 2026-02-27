@@ -213,13 +213,18 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       acreage: r.acreage,
       crop: r.crop,
       plant_date: r.plantDate,
+      fsa_farm_number: r.fsaFarmNumber,
+      fsa_tract_number: r.fsaTractNumber,
+      fsa_field_number: r.fsaFieldNumber,
+      intended_use: r.intendedUse,
+      producer_share: r.producerShare,
+      irrigation_practice: r.irrigationPractice,
       season_year: activeSeason,
       timestamp: new Date(timestamp).toISOString()
     }]);
 
     if (error) {
       console.error('Error adding plant record:', error);
-      // Revert optimistic update on error
       setPlantRecords(prev => prev.filter(rec => rec.id !== id));
     }
   }, [activeSeason]);
@@ -235,6 +240,12 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       acreage: r.acreage,
       crop: r.crop,
       plant_date: r.plantDate,
+      fsa_farm_number: r.fsaFarmNumber,
+      fsa_tract_number: r.fsaTractNumber,
+      fsa_field_number: r.fsaFieldNumber,
+      intended_use: r.intendedUse,
+      producer_share: r.producerShare,
+      irrigation_practice: r.irrigationPractice,
       season_year: r.seasonYear,
       timestamp: new Date(r.timestamp).toISOString()
     });
@@ -308,12 +319,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       id,
       field_id: r.fieldId,
       field_name: r.fieldName,
+      crop: r.crop,
       destination: r.destination,
       bin_id: r.binId,
       bushels: r.bushels,
       moisture_percent: r.moisturePercent,
       landlord_split_percent: r.landlordSplitPercent,
       harvest_date: r.harvestDate,
+      fsa_farm_number: r.fsaFarmNumber,
+      fsa_tract_number: r.fsaTractNumber,
       season_year: activeSeason,
       timestamp: new Date(timestamp).toISOString()
     }]);
@@ -331,12 +345,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       id: r.id,
       field_id: r.fieldId,
       field_name: r.fieldName,
+      crop: r.crop,
       destination: r.destination,
       bin_id: r.binId,
       bushels: r.bushels,
       moisture_percent: r.moisturePercent,
       landlord_split_percent: r.landlordSplitPercent,
       harvest_date: r.harvestDate,
+      fsa_farm_number: r.fsaFarmNumber,
+      fsa_tract_number: r.fsaTractNumber,
       season_year: r.seasonYear,
       timestamp: new Date(r.timestamp).toISOString()
     });
@@ -494,13 +511,38 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const addField = useCallback(async (f: Omit<Field, 'id'>) => {
     const id = uid();
     setFields(prev => [...prev, { ...f, id }]);
-    const { error } = await supabase.from('fields').insert([{ id, ...f }]);
+    const { error } = await supabase.from('fields').insert([{
+      id,
+      name: f.name,
+      acreage: f.acreage,
+      lat: f.lat,
+      lng: f.lng,
+      fsa_farm_number: f.fsaFarmNumber,
+      fsa_tract_number: f.fsaTractNumber,
+      fsa_field_number: f.fsaFieldNumber,
+      producer_share: f.producerShare,
+      irrigation_practice: f.irrigationPractice,
+      intended_use: f.intendedUse
+    }]);
     if (error) console.error('Error adding field:', error);
   }, []);
 
   const updateField = useCallback(async (f: Field) => {
     setFields(prev => prev.map(existing => existing.id === f.id ? f : existing));
-    const { error } = await supabase.from('fields').upsert(f);
+    const { error } = await supabase.from('fields').upsert({
+      id: f.id,
+      name: f.name,
+      acreage: f.acreage,
+      lat: f.lat,
+      lng: f.lng,
+      fsa_farm_number: f.fsaFarmNumber,
+      fsa_tract_number: f.fsaTractNumber,
+      fsa_field_number: f.fsaFieldNumber,
+      producer_share: f.producerShare,
+      irrigation_practice: f.irrigationPractice,
+      intended_use: f.intendedUse,
+      deleted_at: f.deleted_at
+    });
     if (error) console.error('Error updating field:', error);
   }, []);
 
@@ -515,13 +557,22 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const addBin = useCallback(async (b: Omit<Bin, 'id'>) => {
     const id = uid();
     setBins(prev => [...prev, { ...b, id }]);
-    const { error } = await supabase.from('bins').insert([{ id, ...b }]);
+    const { error } = await supabase.from('bins').insert([{
+      id,
+      name: b.name,
+      capacity: b.capacity
+    }]);
     if (error) console.error('Error adding bin:', error);
   }, []);
 
   const updateBin = useCallback(async (b: Bin) => {
     setBins(prev => prev.map(existing => existing.id === b.id ? b : existing));
-    const { error } = await supabase.from('bins').upsert(b);
+    const { error } = await supabase.from('bins').upsert({
+      id: b.id,
+      name: b.name,
+      capacity: b.capacity,
+      deleted_at: b.deleted_at
+    });
     if (error) console.error('Error updating bin:', error);
   }, []);
 
@@ -549,13 +600,22 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const addSprayRecipe = useCallback(async (r: Omit<SprayRecipe, 'id'>) => {
     const id = uid();
     setSprayRecipes(prev => [...prev, { ...r, id }]);
-    const { error } = await supabase.from('spray_recipes').insert([{ id, ...r }]);
+    const { error } = await supabase.from('spray_recipes').insert([{
+      id,
+      name: r.name,
+      products: r.products
+    }]);
     if (error) console.error('Error adding spray recipe:', error);
   }, []);
 
   const updateSprayRecipe = useCallback(async (r: SprayRecipe) => {
     setSprayRecipes(prev => prev.map(existing => existing.id === r.id ? r : existing));
-    const { error } = await supabase.from('spray_recipes').upsert(r);
+    const { error } = await supabase.from('spray_recipes').upsert({
+      id: r.id,
+      name: r.name,
+      products: r.products,
+      deleted_at: r.deleted_at
+    });
     if (error) console.error('Error updating spray recipe:', error);
   }, []);
 
@@ -570,6 +630,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       plant: [] as PlantRecord[],
       spray: [] as SprayRecord[],
       harvest: [] as HarvestRecord[],
+      hay: [] as HayHarvestRecord[],
       grain: [] as GrainMovement[],
     };
 
@@ -676,7 +737,27 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             seasonYear: year
           });
 
-          // 5. Grain Movements
+          // 5. Hay Harvesting (June/August/Sept)
+          if (isCorn && f.id === 'f1') { // Example: Back Forty has some hay
+            [6, 8, 9].forEach((month, idx) => {
+              const hayDate = `${year}-0${month}-15`;
+              allRecords.hay.push({
+                id: uid(),
+                fieldId: f.id,
+                fieldName: f.name,
+                date: hayDate,
+                baleCount: 40 + idx * 5,
+                cuttingNumber: idx + 1,
+                baleType: 'Round',
+                temperature: 85 - idx * 5,
+                conditions: 'Sunny/Dry',
+                timestamp: new Date(hayDate).getTime(),
+                seasonYear: year
+              });
+            });
+          }
+
+          // 6. Grain Movements
           allRecords.grain.push({
             id: uid(),
             binId: isCorn ? 'b1' : 'b2',
@@ -698,6 +779,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setPlantRecords(allRecords.plant);
     setSprayRecords(allRecords.spray);
     setHarvestRecords(allRecords.harvest);
+    setHayHarvestRecords(allRecords.hay);
     setGrainMovements(allRecords.grain);
   }, [fields]);
 
