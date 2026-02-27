@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode, useMemo } from 'react';
 import { Field, PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord, Bin, GrainMovement, SavedSeed, SprayRecipe } from '@/types/farm';
 import { supabase } from '@/lib/supabase';
+import {
+  mapPlantFromDb, mapSprayFromDb, mapHarvestFromDb,
+  mapHayFromDb, mapGrainFromDb, mapFieldFromDb,
+  mapBinFromDb, mapSeedFromDb, mapRecipeFromDb
+} from '@/lib/mappers';
 import { Session } from '@supabase/supabase-js';
 
 const DEFAULT_FIELDS: Field[] = [
@@ -156,15 +161,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             supabase.from('profiles').select('farm_id, active_season').single()
           ]);
 
-          if (fieldsData) setFields(fieldsData);
-          if (binsData) setBins(binsData);
-          if (plantData) setPlantRecords(plantData);
-          if (sprayData) setSprayRecords(sprayData);
-          if (harvestData) setHarvestRecords(harvestData);
-          if (hayData) setHayHarvestRecords(hayData);
-          if (grainData) setGrainMovements(grainData);
-          if (seedsData) setSavedSeeds(seedsData);
-          if (recipesData) setSprayRecipes(recipesData);
+          if (fieldsData) setFields(fieldsData.map(mapFieldFromDb));
+          if (binsData) setBins(binsData.map(mapBinFromDb));
+          if (plantData) setPlantRecords(plantData.map(mapPlantFromDb));
+          if (sprayData) setSprayRecords(sprayData.map(mapSprayFromDb));
+          if (harvestData) setHarvestRecords(harvestData.map(mapHarvestFromDb));
+          if (hayData) setHayHarvestRecords(hayData.map(mapHayFromDb));
+          if (grainData) setGrainMovements(grainData.map(mapGrainFromDb));
+          if (seedsData) setSavedSeeds(seedsData.map(mapSeedFromDb));
+          if (recipesData) setSprayRecipes(recipesData.map(mapRecipeFromDb));
 
           if (profileData) {
             if (profileData.farm_id) setFarmId(profileData.farm_id);
