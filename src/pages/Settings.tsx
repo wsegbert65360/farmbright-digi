@@ -19,7 +19,6 @@ export default function Settings() {
         <RecipeManager />
         <SyncStatus />
         <BackupManager />
-        <DeveloperTools />
         <AccountManager />
       </div>
       <BottomNav />
@@ -27,49 +26,9 @@ export default function Settings() {
   );
 }
 
-function DeveloperTools() {
-  const { seedDemoData, seeding } = useFarm();
-
-  const handleSeed = async () => {
-    try {
-      await seedDemoData();
-      toast.success('Generated and Backed Up 2025 Demo Data');
-    } catch (err) {
-      toast.error('Failed to sync demo data');
-    }
-  };
-
-  return (
-    <Card className="bg-card border-border/50 overflow-hidden relative group">
-      <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-bold flex items-center gap-2">
-          <Database size={16} className="text-blue-500" />
-          Developer Tools
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-blue-500/5 p-3 rounded-lg border border-blue-500/20">
-          <p className="text-xs text-blue-500 font-mono leading-relaxed">
-            Generate a full year's worth of compliant data (Planting, Spraying, Harvesting) and sync it directly to Supabase.
-          </p>
-        </div>
-        <Button
-          onClick={handleSeed}
-          disabled={seeding}
-          variant="outline"
-          className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 font-mono text-xs h-10"
-        >
-          <Database size={14} className={`mr-2 ${seeding ? 'animate-spin' : ''}`} />
-          {seeding ? 'SYNCING TO CLOUD...' : 'SEED FULL YEAR (2025)'}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
 
 function SyncStatus() {
-  const { session, loading, seeding } = useFarm();
+  const { session, loading } = useFarm();
 
   if (!session) return null;
 
@@ -84,9 +43,9 @@ function SyncStatus() {
       <CardContent>
         <div className="flex items-center justify-between p-3 bg-muted rounded-md border border-border">
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${seeding || loading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
             <span className="text-sm font-mono text-foreground font-bold uppercase tracking-tight">
-              {loading ? 'Fetching...' : seeding ? 'Syncing...' : 'Live Connected'}
+              {loading ? 'Fetching...' : 'Live Connected'}
             </span>
           </div>
           <span className="text-[10px] font-mono text-muted-foreground uppercase">

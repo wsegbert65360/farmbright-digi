@@ -85,10 +85,8 @@ interface FarmState {
   addSprayRecipe: (r: Omit<SprayRecipe, 'id'>) => void;
   updateSprayRecipe: (r: SprayRecipe) => void;
   deleteSprayRecipe: (id: string) => void;
-  seedDemoData: () => Promise<void>;
   signOut: () => void;
   farm_id: string | null;
-  seeding: boolean;
 }
 
 const FarmContext = createContext<FarmState | null>(null);
@@ -109,7 +107,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [activeSeason, setActiveSeason] = useState<number>(() => loadFromStorage('ff_active_season', new Date().getFullYear()));
   const [viewingSeason, setViewingSeason] = useState<number>(() => loadFromStorage('ff_active_season', new Date().getFullYear()));
   const [farm_id, setFarmId] = useState<string | null>(() => loadFromStorage('ff_farm_id', null));
-  const [seeding, setSeeding] = useState(false);
 
   // Initialize Supabase session
   useEffect(() => {
@@ -137,6 +134,12 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         try {
           // Fetch all data in parallel from structured tables
+          const query = (table: string) => {
+            let q = supabase.from(table).select('*').is('deleted_at', null);
+            if (farm_id) q = q.eq('farm_id', farm_id);
+            return q;
+          };
+
           const [
             { data: fieldsData },
             { data: binsData },
@@ -149,15 +152,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             { data: recipesData },
             { data: profileData }
           ] = await Promise.all([
-            supabase.from('fields').select('*'),
-            supabase.from('bins').select('*'),
-            supabase.from('plant_records').select('*'),
-            supabase.from('spray_records').select('*'),
-            supabase.from('harvest_records').select('*'),
-            supabase.from('hay_harvest_records').select('*'),
-            supabase.from('grain_movements').select('*'),
-            supabase.from('saved_seeds').select('*'),
-            supabase.from('spray_recipes').select('*'),
+            query('fields'),
+            query('bins'),
+            query('plant_records'),
+            query('spray_records'),
+            query('harvest_records'),
+            query('hay_harvest_records'),
+            query('grain_movements'),
+            query('saved_seeds'),
+            query('spray_recipes'),
             supabase.from('profiles').select('farm_id, active_season').single()
           ]);
 
@@ -214,6 +217,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.from('plant_records').insert([{
       id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       seed_variety: r.seedVariety,
@@ -234,13 +238,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       console.error('Error adding plant record:', error);
       setPlantRecords(prev => prev.filter(rec => rec.id !== id));
     }
-  }, [activeSeason]);
+  }, [activeSeason, farm_id]);
 
   const updatePlantRecord = useCallback(async (r: PlantRecord) => {
     setPlantRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
 
     const { error } = await supabase.from('plant_records').upsert({
       id: r.id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       seed_variety: r.seedVariety,
@@ -258,7 +263,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) console.error('Error updating plant record:', error);
-  }, []);
+  }, [farm_id]);
 
   const addSprayRecord = useCallback(async (r: Omit<SprayRecord, 'id' | 'timestamp'>) => {
     const id = uid();
@@ -269,6 +274,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.from('spray_records').insert([{
       id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       product: r.product,
@@ -281,6 +287,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       applicator_name: r.applicatorName,
       license_number: r.licenseNumber,
       epa_reg_number: r.epaRegNumber,
+      target_pest: r.targetPest,
+      wind_direction: r.windDirection,
+      relative_humidity: r.relativeHumidity,
+      treated_area_size: r.treatedAreaSize,
+      total_amount_applied: r.totalAmountApplied,
+      involved_technicians: r.involvedTechnicians,
+      mixture_rate: r.mixtureRate,
+      total_mixture_volume: r.totalMixtureVolume,
       season_year: activeSeason,
       timestamp: new Date(timestamp).toISOString()
     }]);
@@ -289,13 +303,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       console.error('Error adding spray record:', error);
       setSprayRecords(prev => prev.filter(rec => rec.id !== id));
     }
-  }, [activeSeason]);
+  }, [activeSeason, farm_id]);
 
   const updateSprayRecord = useCallback(async (r: SprayRecord) => {
     setSprayRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
 
     const { error } = await supabase.from('spray_records').upsert({
       id: r.id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       product: r.product,
@@ -308,12 +323,20 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       applicator_name: r.applicatorName,
       license_number: r.licenseNumber,
       epa_reg_number: r.epaRegNumber,
+      target_pest: r.targetPest,
+      wind_direction: r.windDirection,
+      relative_humidity: r.relativeHumidity,
+      treated_area_size: r.treatedAreaSize,
+      total_amount_applied: r.totalAmountApplied,
+      involved_technicians: r.involvedTechnicians,
+      mixture_rate: r.mixtureRate,
+      total_mixture_volume: r.totalMixtureVolume,
       season_year: r.seasonYear,
       timestamp: new Date(r.timestamp).toISOString()
     });
 
     if (error) console.error('Error updating spray record:', error);
-  }, []);
+  }, [farm_id]);
 
   const addHarvestRecord = useCallback(async (r: Omit<HarvestRecord, 'id' | 'timestamp'>) => {
     const id = uid();
@@ -324,6 +347,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.from('harvest_records').insert([{
       id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       crop: r.crop,
@@ -343,13 +367,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       console.error('Error adding harvest record:', error);
       setHarvestRecords(prev => prev.filter(rec => rec.id !== id));
     }
-  }, [activeSeason]);
+  }, [activeSeason, farm_id]);
 
   const updateHarvestRecord = useCallback(async (r: HarvestRecord) => {
     setHarvestRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
 
     const { error } = await supabase.from('harvest_records').upsert({
       id: r.id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       crop: r.crop,
@@ -366,7 +391,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) console.error('Error updating harvest record:', error);
-  }, []);
+  }, [farm_id]);
 
   const addHayHarvestRecord = useCallback(async (r: Omit<HayHarvestRecord, 'id' | 'timestamp'>) => {
     const id = uid();
@@ -377,6 +402,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.from('hay_harvest_records').insert([{
       id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       date: r.date,
@@ -393,13 +419,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       console.error('Error adding hay harvest record:', error);
       setHayHarvestRecords(prev => prev.filter(rec => rec.id !== id));
     }
-  }, [activeSeason]);
+  }, [activeSeason, farm_id]);
 
   const updateHayHarvestRecord = useCallback(async (r: HayHarvestRecord) => {
     setHayHarvestRecords(prev => prev.map(existing => existing.id === r.id ? r : existing));
 
     const { error } = await supabase.from('hay_harvest_records').upsert({
       id: r.id,
+      farm_id,
       field_id: r.fieldId,
       field_name: r.fieldName,
       date: r.date,
@@ -413,7 +440,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) console.error('Error updating hay harvest record:', error);
-  }, []);
+  }, [farm_id]);
 
   const addGrainMovement = useCallback(async (r: Omit<GrainMovement, 'id'> & { timestamp?: number }) => {
     const id = uid();
@@ -424,6 +451,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.from('grain_movements').insert([{
       id,
+      farm_id,
       bin_id: r.binId,
       bin_name: r.binName,
       type: r.type,
@@ -440,13 +468,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       console.error('Error adding grain movement:', error);
       setGrainMovements(prev => prev.filter(rec => rec.id !== id));
     }
-  }, [activeSeason]);
+  }, [activeSeason, farm_id]);
 
   const updateGrainMovement = useCallback(async (r: GrainMovement) => {
     setGrainMovements(prev => prev.map(existing => existing.id === r.id ? r : existing));
 
     const { error } = await supabase.from('grain_movements').upsert({
       id: r.id,
+      farm_id,
       bin_id: r.binId,
       bin_name: r.binName,
       type: r.type,
@@ -460,7 +489,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) console.error('Error updating grain movement:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteGrainMovements = useCallback(async (ids: string[]) => {
     setGrainMovements(prev => prev.filter(r => !ids.includes(r.id)));
@@ -520,6 +549,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setFields(prev => [...prev, { ...f, id }]);
     const { error } = await supabase.from('fields').insert([{
       id,
+      farm_id,
       name: f.name,
       acreage: f.acreage,
       lat: f.lat,
@@ -532,12 +562,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       intended_use: f.intendedUse
     }]);
     if (error) console.error('Error adding field:', error);
-  }, []);
+  }, [farm_id]);
 
   const updateField = useCallback(async (f: Field) => {
     setFields(prev => prev.map(existing => existing.id === f.id ? f : existing));
     const { error } = await supabase.from('fields').upsert({
       id: f.id,
+      farm_id,
       name: f.name,
       acreage: f.acreage,
       lat: f.lat,
@@ -551,7 +582,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       deleted_at: f.deleted_at
     });
     if (error) console.error('Error updating field:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteField = useCallback(async (id: string) => {
     setFields(prev => prev.map(f =>
@@ -566,22 +597,24 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setBins(prev => [...prev, { ...b, id }]);
     const { error } = await supabase.from('bins').insert([{
       id,
+      farm_id,
       name: b.name,
       capacity: b.capacity
     }]);
     if (error) console.error('Error adding bin:', error);
-  }, []);
+  }, [farm_id]);
 
   const updateBin = useCallback(async (b: Bin) => {
     setBins(prev => prev.map(existing => existing.id === b.id ? b : existing));
     const { error } = await supabase.from('bins').upsert({
       id: b.id,
+      farm_id,
       name: b.name,
       capacity: b.capacity,
       deleted_at: b.deleted_at
     });
     if (error) console.error('Error updating bin:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteBin = useCallback(async (id: string) => {
     setBins(prev => prev.map(b =>
@@ -594,9 +627,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const addSeed = useCallback(async (name: string) => {
     const id = uid();
     setSavedSeeds(prev => [...prev, { id, name }]);
-    const { error } = await supabase.from('saved_seeds').insert([{ id, name }]);
+    const { error } = await supabase.from('saved_seeds').insert([{ id, farm_id, name }]);
     if (error) console.error('Error adding seed:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteSeed = useCallback(async (id: string) => {
     setSavedSeeds(prev => prev.filter(s => s.id !== id));
@@ -609,22 +642,32 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setSprayRecipes(prev => [...prev, { ...r, id }]);
     const { error } = await supabase.from('spray_recipes').insert([{
       id,
+      farm_id,
       name: r.name,
-      products: r.products
+      products: r.products,
+      applicator_name: r.applicatorName,
+      license_number: r.licenseNumber,
+      target_pest: r.targetPest,
+      epa_reg_number: r.epaRegNumber
     }]);
     if (error) console.error('Error adding spray recipe:', error);
-  }, []);
+  }, [farm_id]);
 
   const updateSprayRecipe = useCallback(async (r: SprayRecipe) => {
     setSprayRecipes(prev => prev.map(existing => existing.id === r.id ? r : existing));
     const { error } = await supabase.from('spray_recipes').upsert({
       id: r.id,
+      farm_id,
       name: r.name,
       products: r.products,
+      applicator_name: r.applicatorName,
+      license_number: r.licenseNumber,
+      target_pest: r.targetPest,
+      epa_reg_number: r.epaRegNumber,
       deleted_at: r.deleted_at
     });
     if (error) console.error('Error updating spray recipe:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteSprayRecipe = useCallback(async (id: string) => {
     setSprayRecipes(prev => prev.filter(r => r.id !== id));
@@ -632,252 +675,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Error deleting spray recipe:', error);
   }, []);
 
-  const seedDemoData = useCallback(async () => {
-    const allRecords = {
-      plant: [] as PlantRecord[],
-      spray: [] as SprayRecord[],
-      harvest: [] as HarvestRecord[],
-      hay: [] as HayHarvestRecord[],
-      grain: [] as GrainMovement[],
-    };
-
-    const generateForYear = (year: number, isHistorical: boolean) => {
-      fields.forEach(f => {
-        const isCorn = f.id.charCodeAt(1) % 2 === 0;
-        const crop = isCorn ? 'Corn' : 'Soybeans';
-
-        // 1. Planting (April/May)
-        const plantDate = `${year}-05-${(10 + parseInt(f.id.slice(1))) % 28}`;
-        allRecords.plant.push({
-          id: uid(),
-          fieldId: f.id,
-          fieldName: f.name,
-          seedVariety: isCorn ? 'DKC 64-35' : 'P31T77',
-          acreage: f.acreage,
-          crop,
-          plantDate,
-          timestamp: new Date(plantDate).getTime(),
-          fsaFarmNumber: '3452',
-          fsaTractNumber: '8821',
-          fsaFieldNumber: f.id.slice(1),
-          intendedUse: 'Grain',
-          producerShare: f.id === 'f5' ? 50 : 100,
-          irrigationPractice: f.id === 'f5' ? 'Irrigated' : 'Non-Irrigated',
-          seasonYear: year
-        });
-
-        // 2. Spraying (June - Pass 1)
-        const sprayDate1 = `${year}-06-12`;
-        allRecords.spray.push({
-          id: uid(),
-          fieldId: f.id,
-          fieldName: f.name,
-          product: isCorn ? 'Harness Extra' : 'Authority First',
-          products: [
-            { product: isCorn ? 'Harness Extra' : 'Authority First', rate: isCorn ? '2.2' : '4.5', rateUnit: isCorn ? 'qt/ac' : 'oz/ac', epaRegNumber: isCorn ? '524-480' : '279-3246' },
-            { product: 'AMS', rate: '1.5', rateUnit: 'lb/ac', epaRegNumber: 'Exempt' }
-          ],
-          windSpeed: 4,
-          temperature: 78,
-          timestamp: new Date(sprayDate1).getTime(),
-          applicatorName: 'William Egbert',
-          licenseNumber: '1234-567',
-          equipmentId: 'Miller Nitro',
-          epaRegNumber: isCorn ? '524-480' : '279-3246',
-          targetPest: 'Grasses/Broadleaves',
-          windDirection: 'SW',
-          relativeHumidity: 65,
-          sprayDate: sprayDate1,
-          startTime: '08:15',
-          treatedAreaSize: f.acreage.toString(),
-          mixtureRate: '15 gal/ac',
-          totalMixtureVolume: (f.acreage * 15).toString(),
-          seasonYear: year
-        });
-
-        if (isHistorical) {
-          // 3. Spraying (July - Pass 2)
-          const sprayDate2 = `${year}-07-15`;
-          allRecords.spray.push({
-            id: uid(),
-            fieldId: f.id,
-            fieldName: f.name,
-            product: 'Roundup PowerMAX',
-            products: [
-              { product: 'Roundup PowerMAX', rate: '32', rateUnit: 'oz/ac', epaRegNumber: '524-549' }
-            ],
-            windSpeed: 6,
-            temperature: 88,
-            timestamp: new Date(sprayDate2).getTime(),
-            applicatorName: 'William Egbert',
-            licenseNumber: '1234-567',
-            equipmentId: 'Miller Nitro',
-            epaRegNumber: '524-549',
-            targetPest: 'Waterhemp',
-            windDirection: 'S',
-            relativeHumidity: 70,
-            sprayDate: sprayDate2,
-            startTime: '10:30',
-            treatedAreaSize: f.acreage.toString(),
-            mixtureRate: '12.5 gal/ac',
-            totalMixtureVolume: (f.acreage * 12.5).toString(),
-            seasonYear: year
-          });
-
-          // 4. Harvesting (October/November)
-          const harvestDate = `${year}-10-${(15 + parseInt(f.id.slice(1))) % 28}`;
-          const yieldPerAc = isCorn ? 210 : 65;
-          const totalBu = f.acreage * yieldPerAc;
-          allRecords.harvest.push({
-            id: uid(),
-            fieldId: f.id,
-            fieldName: f.name,
-            crop,
-            bushels: totalBu,
-            harvestDate,
-            timestamp: new Date(harvestDate).getTime(),
-            destination: 'bin',
-            moisturePercent: isCorn ? 17.5 : 13.0,
-            landlordSplitPercent: 0,
-            fsaFarmNumber: '3452',
-            fsaTractNumber: '8821',
-            seasonYear: year
-          });
-
-          // 5. Hay Harvesting (June/August/Sept)
-          if (isCorn && f.id === 'f1') { // Example: Back Forty has some hay
-            [6, 8, 9].forEach((month, idx) => {
-              const hayDate = `${year}-0${month}-15`;
-              allRecords.hay.push({
-                id: uid(),
-                fieldId: f.id,
-                fieldName: f.name,
-                date: hayDate,
-                baleCount: 40 + idx * 5,
-                cuttingNumber: idx + 1,
-                baleType: 'Round',
-                temperature: 85 - idx * 5,
-                conditions: 'Sunny/Dry',
-                timestamp: new Date(hayDate).getTime(),
-                seasonYear: year
-              });
-            });
-          }
-
-          // 6. Grain Movements
-          allRecords.grain.push({
-            id: uid(),
-            binId: isCorn ? 'b1' : 'b2',
-            binName: isCorn ? 'Bin #1' : 'Bin #2',
-            type: 'in',
-            bushels: totalBu,
-            moisturePercent: isCorn ? 17.5 : 13.0,
-            sourceFieldName: f.name,
-            timestamp: new Date(harvestDate).getTime(),
-            seasonYear: year
-          });
-        }
-      });
-    };
-
-    generateForYear(2025, true);
-    generateForYear(2026, false); // Active season is just starting
-
-    setPlantRecords(allRecords.plant);
-    setSprayRecords(allRecords.spray);
-    setHarvestRecords(allRecords.harvest);
-    setHayHarvestRecords(allRecords.hay);
-    setGrainMovements(allRecords.grain);
-
-    // 7. Sync to Supabase
-    if (session) {
-      setSeeding(true);
-      try {
-        await Promise.all([
-          supabase.from('plant_records').insert(allRecords.plant.map(r => ({
-            id: r.id,
-            field_id: r.fieldId,
-            field_name: r.fieldName,
-            seed_variety: r.seedVariety,
-            acreage: r.acreage,
-            crop: r.crop,
-            plant_date: r.plantDate,
-            fsa_farm_number: r.fsaFarmNumber,
-            fsa_tract_number: r.fsaTractNumber,
-            fsa_field_number: r.fsaFieldNumber,
-            intended_use: r.intendedUse,
-            producer_share: r.producerShare,
-            irrigation_practice: r.irrigationPractice,
-            season_year: r.seasonYear,
-            timestamp: new Date(r.timestamp).toISOString()
-          }))),
-          supabase.from('spray_records').insert(allRecords.spray.map(r => ({
-            id: r.id,
-            field_id: r.fieldId,
-            field_name: r.fieldName,
-            product: r.product,
-            products: r.products,
-            wind_speed: r.windSpeed,
-            temperature: r.temperature,
-            spray_date: r.sprayDate,
-            start_time: r.startTime,
-            equipment_id: r.equipmentId,
-            applicator_name: r.applicatorName,
-            license_number: r.licenseNumber,
-            epa_reg_number: r.epaRegNumber,
-            season_year: r.seasonYear,
-            timestamp: new Date(r.timestamp).toISOString()
-          }))),
-          supabase.from('harvest_records').insert(allRecords.harvest.map(r => ({
-            id: r.id,
-            field_id: r.fieldId,
-            field_name: r.fieldName,
-            crop: r.crop,
-            destination: r.destination,
-            bin_id: r.binId,
-            bushels: r.bushels,
-            moisture_percent: r.moisturePercent,
-            landlord_split_percent: r.landlordSplitPercent,
-            harvest_date: r.harvestDate,
-            fsa_farm_number: r.fsaFarmNumber,
-            fsa_tract_number: r.fsaTractNumber,
-            season_year: r.seasonYear,
-            timestamp: new Date(r.timestamp).toISOString()
-          }))),
-          supabase.from('hay_harvest_records').insert(allRecords.hay.map(r => ({
-            id: r.id,
-            field_id: r.fieldId,
-            field_name: r.fieldName,
-            date: r.date,
-            bale_count: r.baleCount,
-            cutting_number: r.cuttingNumber,
-            bale_type: r.baleType,
-            temperature: r.temperature,
-            conditions: r.conditions,
-            season_year: r.seasonYear,
-            timestamp: new Date(r.timestamp).toISOString()
-          }))),
-          supabase.from('grain_movements').insert(allRecords.grain.map(r => ({
-            id: r.id,
-            bin_id: r.binId,
-            bin_name: r.binName,
-            type: r.type,
-            bushels: r.bushels,
-            moisture_percent: r.moisturePercent,
-            source_field_name: r.sourceFieldName,
-            destination: r.destination,
-            price: r.price,
-            season_year: r.seasonYear,
-            timestamp: new Date(r.timestamp).toISOString()
-          })))
-        ]);
-      } catch (err) {
-        console.error('Seeding error:', err);
-      } finally {
-        setSeeding(false);
-      }
-    }
-  }, [fields, session]);
 
   const rolloverToNewSeason = useCallback(async (year: number) => {
     // 1. Force Backup (JSON export)
@@ -931,10 +728,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       addField, updateField, deleteField,
       addBin, updateBin, deleteBin,
       addSeed, deleteSeed, addSprayRecipe, updateSprayRecipe, deleteSprayRecipe,
-      seedDemoData,
       signOut,
       farm_id,
-      seeding,
     }}>
       {children}
     </FarmContext.Provider>

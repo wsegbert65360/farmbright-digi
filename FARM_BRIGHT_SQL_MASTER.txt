@@ -1,15 +1,15 @@
--- ==========================================
+-- ===================================================================================
 -- FARM-BRIGHT DIGI - MASTER HARDENED SCHEMA (CONSOLIDATED)
 -- 100% ALIGNMENT: SQL (snake_case) <-> Frontend (camelCase)
 -- SECURITY: Tenant Isolation (RLS) + Automated Farm ID Management
--- ==========================================
+-- ===================================================================================
 
 -- 0. PREPARATION & EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ==========================================
+-- ===================================================================================
 -- 1. CORE IDENTITY & MULTI-TENANCY
--- ==========================================
+-- ===================================================================================
 
 CREATE TABLE IF NOT EXISTS public.farms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -27,9 +27,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ==========================================
+-- ===================================================================================
 -- 2. INFRASTRUCTURE TABLES
--- ==========================================
+-- ===================================================================================
 
 CREATE TABLE IF NOT EXISTS public.fields (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS public.bins (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ==========================================
+-- ===================================================================================
 -- 3. ACTIVITY LOGS (RELATIONAL)
--- ==========================================
+-- ===================================================================================
 
 CREATE TABLE IF NOT EXISTS public.plant_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -183,9 +183,9 @@ CREATE TABLE IF NOT EXISTS public.spray_recipes (
     deleted_at TIMESTAMPTZ
 );
 
--- ==========================================
+-- ===================================================================================
 -- 4. ROW LEVEL SECURITY (RLS) POLICIES
--- ==========================================
+-- ===================================================================================
 
 -- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -199,7 +199,7 @@ ALTER TABLE public.grain_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_seeds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spray_recipes ENABLE ROW LEVEL SECURITY;
 
--- Profile Policies (User-Specific)
+-- Profile Policies (Individual Access)
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
@@ -224,25 +224,25 @@ BEGIN
             CREATE POLICY "tenant_isolation" ON public.%I
             FOR ALL
             USING (
-                farm_id = (auth.jwt() ->> ''farm_id'')::uuid
+                (farm_id = (auth.jwt() -> 'app_metadata' ->> 'farm_id')::uuid)
                 AND deleted_at IS NULL
             )
             WITH CHECK (
-                farm_id = (auth.jwt() ->> ''farm_id'')::uuid
+                (farm_id = (auth.jwt() -> 'app_metadata' ->> 'farm_id')::uuid)
             )', t);
     END LOOP;
 END $$;
 
--- ==========================================
--- 5. AUTOMATED TRIGGERS (FARM_ID MANAGEMENT)
--- ==========================================
+-- ===================================================================================
+-- 5. AUTOMATED TRIGGERS & FUNCTIONS
+-- ===================================================================================
 
 -- Function: Assign tenant ID on insert automatically from JWT session
 CREATE OR REPLACE FUNCTION public.assign_tenant_id()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.farm_id IS NULL THEN
-        NEW.farm_id := (auth.jwt() ->> 'farm_id')::uuid;
+        NEW.farm_id := (auth.jwt() -> 'app_metadata' ->> 'farm_id')::uuid;
     END IF;
     RETURN NEW;
 END;
