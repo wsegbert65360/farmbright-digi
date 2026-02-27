@@ -3,7 +3,7 @@ import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
 import { ClipboardList, Sprout, Droplets, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor } from 'lucide-react';
 import { formatDate } from '@/config/constants';
-import { generateMissouriLog, exportFsa578Data } from '@/lib/complianceReports';
+import { generateMissouriLog, exportFsa578Data, exportHarvestData } from '@/lib/complianceReports';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
@@ -135,14 +135,23 @@ export default function Activity() {
               EXPORT LOG
             </button>
           )}
-          {tab === 'plant' && (
+          {(tab === 'plant' || tab === 'harvest') && (
             <button
-              onClick={() => exportFsa578Data(plantRecords, fields)}
+              onClick={() => tab === 'plant' ? exportFsa578Data(plantRecords, fields) : exportHarvestData(harvestRecords, fields)}
               className="p-2.5 rounded-lg bg-plant/10 text-plant hover:bg-plant/20 transition-colors flex items-center gap-2 font-mono text-[10px] font-bold"
-              title="Export FSA-578 Data Summary"
+              title={tab === 'plant' ? "Export FSA-578 Data Summary" : "Export Harvest Production Data"}
             >
               <FileDown size={16} />
               FSA EXPORT
+            </button>
+          )}
+          {tab === 'hay' && (
+            <button
+              onClick={() => window.location.href = '/reports?tab=hay-summary'}
+              className="p-2.5 rounded-lg bg-harvest/10 text-harvest hover:bg-harvest/20 transition-colors flex items-center gap-2 font-mono text-[10px] font-bold"
+            >
+              <FileDown size={16} />
+              HAY SUMMARY
             </button>
           )}
         </div>
@@ -264,6 +273,34 @@ export default function Activity() {
             </button>
           ))}
 
+          {tab === 'hay' && filteredHay.map(r => (
+            <button
+              key={r.id}
+              onClick={() => toggle(r.id)}
+              className={`w-full text-left bg-card border rounded-lg p-3 transition-all ${selected.has(r.id) ? 'border-destructive bg-destructive/5' : 'border-border'
+                }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                  </div>
+                  <div className="text-xs font-mono text-harvest mt-1">
+                    {r.baleCount} {r.baleType} Bales · Cutting #{r.cuttingNumber}
+                    {r.temperature && ` · ${r.temperature}°F`}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => edit(e, r)}
+                  className="ml-3 p-2 rounded-md hover:bg-harvest/10 text-muted-foreground hover:text-harvest transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            </button>
+          ))}
+
           {tab === 'grain' && filteredGrain.map(m => (
             <button
               key={m.id}
@@ -302,6 +339,7 @@ export default function Activity() {
         {tab === 'plant' && filteredPlant.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No planting records</p>}
         {tab === 'spray' && filteredSpray.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No spray records</p>}
         {tab === 'harvest' && filteredHarvest.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No harvest records</p>}
+        {tab === 'hay' && filteredHay.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No hay records</p>}
         {tab === 'grain' && filteredGrain.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No grain movement records</p>}
       </main>
 
