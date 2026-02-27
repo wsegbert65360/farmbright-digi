@@ -17,6 +17,7 @@ export default function Settings() {
 
         <SeedManager />
         <RecipeManager />
+        <SyncStatus />
         <BackupManager />
         <DeveloperTools />
         <AccountManager />
@@ -27,7 +28,16 @@ export default function Settings() {
 }
 
 function DeveloperTools() {
-  const { seedDemoData } = useFarm();
+  const { seedDemoData, seeding } = useFarm();
+
+  const handleSeed = async () => {
+    try {
+      await seedDemoData();
+      toast.success('Generated and Backed Up 2025 Demo Data');
+    } catch (err) {
+      toast.error('Failed to sync demo data');
+    }
+  };
 
   return (
     <Card className="bg-card border-border/50 overflow-hidden relative group">
@@ -41,20 +51,51 @@ function DeveloperTools() {
       <CardContent className="space-y-4">
         <div className="bg-blue-500/5 p-3 rounded-lg border border-blue-500/20">
           <p className="text-xs text-blue-500 font-mono leading-relaxed">
-            Generate a full year's worth of compliant data (Planting, Spraying, Harvesting) to audit report layouts and exports.
+            Generate a full year's worth of compliant data (Planting, Spraying, Harvesting) and sync it directly to Supabase.
           </p>
         </div>
         <Button
-          onClick={() => {
-            seedDemoData();
-            toast.success('Generated 2025 Demo Data');
-          }}
+          onClick={handleSeed}
+          disabled={seeding}
           variant="outline"
           className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 font-mono text-xs h-10"
         >
-          <Database size={14} className="mr-2" />
-          SEED FULL YEAR (2025)
+          <Database size={14} className={`mr-2 ${seeding ? 'animate-spin' : ''}`} />
+          {seeding ? 'SYNCING TO CLOUD...' : 'SEED FULL YEAR (2025)'}
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SyncStatus() {
+  const { session, loading, seeding } = useFarm();
+
+  if (!session) return null;
+
+  return (
+    <Card className="border-border/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-foreground text-lg flex items-center gap-2">
+          <Cloud size={18} className="text-primary" />
+          Cloud Sync Status
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between p-3 bg-muted rounded-md border border-border">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${seeding || loading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <span className="text-sm font-mono text-foreground font-bold uppercase tracking-tight">
+              {loading ? 'Fetching...' : seeding ? 'Syncing...' : 'Live Connected'}
+            </span>
+          </div>
+          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+            Supabase Relational DB
+          </span>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-3 font-mono leading-relaxed px-1">
+          Each record you save is automatically backed up to your hardened multi-tenant partition on Supabase for total security and data durability.
+        </p>
       </CardContent>
     </Card>
   );

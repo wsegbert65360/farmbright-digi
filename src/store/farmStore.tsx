@@ -80,9 +80,10 @@ interface FarmState {
   addSprayRecipe: (r: Omit<SprayRecipe, 'id'>) => void;
   updateSprayRecipe: (r: SprayRecipe) => void;
   deleteSprayRecipe: (id: string) => void;
-  seedDemoData: () => void;
+  seedDemoData: () => Promise<void>;
   signOut: () => void;
   farm_id: string | null;
+  seeding: boolean;
 }
 
 const FarmContext = createContext<FarmState | null>(null);
@@ -103,6 +104,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [activeSeason, setActiveSeason] = useState<number>(() => loadFromStorage('ff_active_season', new Date().getFullYear()));
   const [viewingSeason, setViewingSeason] = useState<number>(() => loadFromStorage('ff_active_season', new Date().getFullYear()));
   const [farm_id, setFarmId] = useState<string | null>(() => loadFromStorage('ff_farm_id', null));
+  const [seeding, setSeeding] = useState(false);
 
   // Initialize Supabase session
   useEffect(() => {
@@ -625,7 +627,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Error deleting spray recipe:', error);
   }, []);
 
-  const seedDemoData = useCallback(() => {
+  const seedDemoData = useCallback(async () => {
     const allRecords = {
       plant: [] as PlantRecord[],
       spray: [] as SprayRecord[],
@@ -781,7 +783,96 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setHarvestRecords(allRecords.harvest);
     setHayHarvestRecords(allRecords.hay);
     setGrainMovements(allRecords.grain);
-  }, [fields]);
+
+    // 7. Sync to Supabase
+    if (session) {
+      setSeeding(true);
+      try {
+        await Promise.all([
+          supabase.from('plant_records').insert(allRecords.plant.map(r => ({
+            id: r.id,
+            field_id: r.fieldId,
+            field_name: r.fieldName,
+            seed_variety: r.seedVariety,
+            acreage: r.acreage,
+            crop: r.crop,
+            plant_date: r.plantDate,
+            fsa_farm_number: r.fsaFarmNumber,
+            fsa_tract_number: r.fsaTractNumber,
+            fsa_field_number: r.fsaFieldNumber,
+            intended_use: r.intendedUse,
+            producer_share: r.producerShare,
+            irrigation_practice: r.irrigationPractice,
+            season_year: r.seasonYear,
+            timestamp: new Date(r.timestamp).toISOString()
+          }))),
+          supabase.from('spray_records').insert(allRecords.spray.map(r => ({
+            id: r.id,
+            field_id: r.fieldId,
+            field_name: r.fieldName,
+            product: r.product,
+            products: r.products,
+            wind_speed: r.windSpeed,
+            temperature: r.temperature,
+            spray_date: r.sprayDate,
+            start_time: r.startTime,
+            equipment_id: r.equipmentId,
+            applicator_name: r.applicatorName,
+            license_number: r.licenseNumber,
+            epa_reg_number: r.epaRegNumber,
+            season_year: r.seasonYear,
+            timestamp: new Date(r.timestamp).toISOString()
+          }))),
+          supabase.from('harvest_records').insert(allRecords.harvest.map(r => ({
+            id: r.id,
+            field_id: r.fieldId,
+            field_name: r.fieldName,
+            crop: r.crop,
+            destination: r.destination,
+            bin_id: r.binId,
+            bushels: r.bushels,
+            moisture_percent: r.moisturePercent,
+            landlord_split_percent: r.landlordSplitPercent,
+            harvest_date: r.harvestDate,
+            fsa_farm_number: r.fsaFarmNumber,
+            fsa_tract_number: r.fsaTractNumber,
+            season_year: r.seasonYear,
+            timestamp: new Date(r.timestamp).toISOString()
+          }))),
+          supabase.from('hay_harvest_records').insert(allRecords.hay.map(r => ({
+            id: r.id,
+            field_id: r.fieldId,
+            field_name: r.fieldName,
+            date: r.date,
+            bale_count: r.baleCount,
+            cutting_number: r.cuttingNumber,
+            bale_type: r.baleType,
+            temperature: r.temperature,
+            conditions: r.conditions,
+            season_year: r.seasonYear,
+            timestamp: new Date(r.timestamp).toISOString()
+          }))),
+          supabase.from('grain_movements').insert(allRecords.grain.map(r => ({
+            id: r.id,
+            bin_id: r.binId,
+            bin_name: r.binName,
+            type: r.type,
+            bushels: r.bushels,
+            moisture_percent: r.moisturePercent,
+            source_field_name: r.sourceFieldName,
+            destination: r.destination,
+            price: r.price,
+            season_year: r.seasonYear,
+            timestamp: new Date(r.timestamp).toISOString()
+          })))
+        ]);
+      } catch (err) {
+        console.error('Seeding error:', err);
+      } finally {
+        setSeeding(false);
+      }
+    }
+  }, [fields, session]);
 
   const rolloverToNewSeason = useCallback(async (year: number) => {
     // 1. Force Backup (JSON export)
@@ -838,6 +929,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       seedDemoData,
       signOut,
       farm_id,
+      seeding,
     }}>
       {children}
     </FarmContext.Provider>
