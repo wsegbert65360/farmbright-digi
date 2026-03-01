@@ -538,18 +538,20 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase
       .from('grain_movements')
       .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+      .in('id', ids)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting grain movements:', error);
-  }, []);
+  }, [farm_id]);
 
   const deletePlantRecords = useCallback(async (ids: string[]) => {
     setPlantRecords(prev => prev.filter(r => !ids.includes(r.id)));
     const { error } = await supabase
       .from('plant_records')
       .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+      .in('id', ids)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting plant records:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteSprayRecords = useCallback(async (ids: string[]) => {
     setSprayRecords(prev => prev.map(r =>
@@ -558,27 +560,30 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase
       .from('spray_records')
       .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+      .in('id', ids)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting spray records:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteHarvestRecords = useCallback(async (ids: string[]) => {
     setHarvestRecords(prev => prev.filter(r => !ids.includes(r.id)));
     const { error } = await supabase
       .from('harvest_records')
       .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+      .in('id', ids)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting harvest records:', error);
-  }, []);
+  }, [farm_id]);
 
   const deleteHayHarvestRecords = useCallback(async (ids: string[]) => {
     setHayHarvestRecords(prev => prev.filter(r => !ids.includes(r.id)));
     const { error } = await supabase
       .from('hay_harvest_records')
       .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+      .in('id', ids)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting hay harvest records:', error);
-  }, []);
+  }, [farm_id]);
 
   const getBinTotal = useCallback((binId: string) => {
     return grainMovements
@@ -681,9 +686,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setBins(prev => prev.map(b =>
       b.id === id ? { ...b, deleted_at: new Date().toISOString() } : b
     ));
-    const { error } = await supabase.from('bins').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase
+      .from('bins')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting bin:', error);
-  }, []);
+  }, [farm_id]);
 
   const addSeed = useCallback(async (name: string) => {
     const id = uid();
@@ -694,9 +703,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
   const deleteSeed = useCallback(async (id: string) => {
     setSavedSeeds(prev => prev.filter(s => s.id !== id));
-    const { error } = await supabase.from('saved_seeds').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase
+      .from('saved_seeds')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting seed:', error);
-  }, []);
+  }, [farm_id]);
 
   const addSprayRecipe = useCallback(async (r: Omit<SprayRecipe, 'id'>) => {
     const id = uid();
@@ -732,9 +745,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
   const deleteSprayRecipe = useCallback(async (id: string) => {
     setSprayRecipes(prev => prev.filter(r => r.id !== id));
-    const { error } = await supabase.from('spray_recipes').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase
+      .from('spray_recipes')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('farm_id', farm_id);
     if (error) console.error('Error deleting spray recipe:', error);
-  }, []);
+  }, [farm_id]);
 
   const rolloverToNewSeason = useCallback(async (year: number) => {
     // 1. Force Backup (JSON export)
