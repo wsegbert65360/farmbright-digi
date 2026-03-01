@@ -23,11 +23,11 @@ import {
 type Tab = 'plant' | 'spray' | 'harvest' | 'hay' | 'grain';
 
 const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[] = [
-  { key: 'plant', icon: Sprout, label: 'Plant', color: 'text-plant' },
-  { key: 'spray', icon: Droplets, label: 'Spray', color: 'text-spray' },
+  { key: 'plant', icon: Sprout, label: 'Planting', color: 'text-plant' },
+  { key: 'spray', icon: Droplets, label: 'Spraying', color: 'text-spray' },
   { key: 'harvest', icon: Wheat, label: 'Harvesting', color: 'text-harvest' },
   { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-harvest' },
-  { key: 'grain', icon: Warehouse, label: 'Harvest', color: 'text-harvest' },
+  { key: 'grain', icon: Warehouse, label: 'Logistics', color: 'text-harvest' },
 ];
 
 export default function Activity() {

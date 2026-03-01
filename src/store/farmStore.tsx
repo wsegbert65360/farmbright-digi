@@ -554,9 +554,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   }, [farm_id]);
 
   const deleteSprayRecords = useCallback(async (ids: string[]) => {
-    setSprayRecords(prev => prev.map(r =>
-      ids.includes(r.id) ? { ...r, deleted_at: new Date().toISOString() } : r
-    ));
+    setSprayRecords(prev => prev.filter(r => !ids.includes(r.id)));
     const { error } = await supabase
       .from('spray_records')
       .update({ deleted_at: new Date().toISOString() })
