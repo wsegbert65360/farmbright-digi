@@ -3,6 +3,7 @@
 ## 📱 PWA & Mobile Optimization
 
 ### **1. PWA Deployment (iPhone/Android)**
+- **Production URL**: [https://farmbright-digi-main.vercel.app](https://farmbright-digi-main.vercel.app)
 - **Icons**: Always provide `icon-192.png` and `icon-512.png` in the `public/` directory.
 - **Manifest**: Managed via `vite-plugin-pwa` in `vite.config.ts`. 
 - **iOS Meta Tags**: Ensure `apple-mobile-web-app-capable` is set to `yes` in `index.html`.

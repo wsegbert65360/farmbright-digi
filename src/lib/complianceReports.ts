@@ -111,9 +111,9 @@ export function exportFsa578Data(plantRecords: PlantRecord[], fields: Field[]) {
         const shareDisplay = share.toFixed(0);
 
         return [
-            r.fsaFarmNumber || field?.fsaFarmNumber || '',
-            r.fsaTractNumber || field?.fsaTractNumber || '',
-            r.fsaFieldNumber || field?.fsaFieldNumber || '',
+            field?.fsaFarmNumber || '',
+            field?.fsaTractNumber || '',
+            field?.fsaFieldNumber || '',
             r.acreage,
             `"${r.crop || ''}"`,
             `"${r.intendedUse || field?.intendedUse || ''}"`,
@@ -150,8 +150,9 @@ export function exportHarvestData(harvestRecords: any[], fields: Field[]) {
             r.moisturePercent,
             r.destination === 'bin' ? 'On-Farm Bin' : 'Elevator/Sale',
             r.landlordSplitPercent,
-            r.fsaFarmNumber || field?.fsaFarmNumber || '',
-            r.fsaTractNumber || field?.fsaTractNumber || ''
+            r.landlordSplitPercent,
+            field?.fsaFarmNumber || '',
+            field?.fsaTractNumber || ''
         ].join(',');
     });
 

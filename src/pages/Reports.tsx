@@ -173,8 +173,12 @@ export default function Reports() {
                           <td className="py-2 px-2 font-mono text-xs text-plant">{r.crop || '—'}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground">{r.seedVariety}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{r.acreage}</td>
-                          <td className="py-2 px-2 font-mono text-xs text-foreground">{r.fsaFarmNumber || '—'}</td>
-                          <td className="py-2 px-2 font-mono text-xs text-foreground">{r.fsaTractNumber || '—'}</td>
+                          <td className="py-2 px-2 font-mono text-xs text-foreground">
+                            {fields.find(f => f.id === r.fieldId)?.fsaFarmNumber || '—'}
+                          </td>
+                          <td className="py-2 px-2 font-mono text-xs text-foreground">
+                            {fields.find(f => f.id === r.fieldId)?.fsaTractNumber || '—'}
+                          </td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground">{r.intendedUse || '—'}</td>
                           <td className="py-2 px-2 font-mono text-[10px] text-foreground">{r.irrigationPractice === 'Irrigated' ? 'IR' : 'NI'}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{(r.producerShare ?? 100).toFixed(0)}%</td>
@@ -368,8 +372,12 @@ export default function Reports() {
                           <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{r.moisturePercent}%</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground">{r.destination === 'bin' ? 'Bin' : 'Town'}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{r.landlordSplitPercent}%</td>
-                          <td className="py-2 px-2 font-mono text-xs text-foreground">{r.fsaFarmNumber || '—'}</td>
-                          <td className="py-2 px-2 font-mono text-xs text-foreground">{r.fsaTractNumber || '—'}</td>
+                          <td className="py-2 px-2 font-mono text-xs text-foreground">
+                            {fields.find(f => f.id === r.fieldId)?.fsaFarmNumber || '—'}
+                          </td>
+                          <td className="py-2 px-2 font-mono text-xs text-foreground">
+                            {fields.find(f => f.id === r.fieldId)?.fsaTractNumber || '—'}
+                          </td>
                         </tr>
                       ))}
                   </tbody>

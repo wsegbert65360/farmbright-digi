@@ -54,8 +54,6 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
       landlordSplitPercent: ls,
       bushels: bu,
       crop: crop.trim() || undefined,
-      fsaFarmNumber: fsaFarm.trim() || undefined,
-      fsaTractNumber: fsaTract.trim() || undefined,
       harvestDate: harvestDate || undefined,
     };
 
@@ -212,26 +210,6 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-muted-foreground font-mono text-xs">FSA FARM #</Label>
-                <Input
-                  value={fsaFarm}
-                  onChange={e => setFsaFarm(e.target.value)}
-                  placeholder="e.g. 1234"
-                  className="mt-1 bg-muted border-border text-foreground"
-                />
-              </div>
-              <div>
-                <Label className="text-muted-foreground font-mono text-xs">FSA TRACT #</Label>
-                <Input
-                  value={fsaTract}
-                  onChange={e => setFsaTract(e.target.value)}
-                  placeholder="e.g. 5678"
-                  className="mt-1 bg-muted border-border text-foreground"
-                />
-              </div>
-            </div>
           </div>
         )}
 
@@ -250,6 +228,6 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
           </DialogFooter>
         )}
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

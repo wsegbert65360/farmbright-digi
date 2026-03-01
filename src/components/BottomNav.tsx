@@ -3,7 +3,7 @@ import { Map, Wheat, ClipboardList, FileText, Settings } from 'lucide-react';
 
 const tabs = [
   { path: '/', icon: Map, label: 'Fields' },
-  { path: '/logistics', icon: Wheat, label: 'Logistics' },
+  { path: '/logistics', icon: Wheat, label: 'Harvest' },
   { path: '/activity', icon: ClipboardList, label: 'Activity' },
   { path: '/reports', icon: FileText, label: 'Reports' },
   { path: '/settings', icon: Settings, label: 'Setup' },
