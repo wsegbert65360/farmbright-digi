@@ -50,7 +50,7 @@ export default function SellModal({ bin, open, onClose }: SellModalProps) {
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-harvest font-bold text-lg">
                         <Banknote size={24} />
-                        Sell Grain — {bin.name}
+                        Sell Harvest — {bin.name}
                     </DialogTitle>
                 </DialogHeader>
 

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Map, Wheat, ClipboardList, FileText, Settings } from 'lucide-react';
 
-// v1.2.3 - Production Guard Hardening: Global Harvest labeling
+// v1.2.4 - Production Guard Hardening: Global Harvest labeling (Forced Update)
 const tabs = [
   { path: '/', icon: Map, label: 'Fields' },
   { path: '/logistics', icon: Wheat, label: 'Harvest' },
