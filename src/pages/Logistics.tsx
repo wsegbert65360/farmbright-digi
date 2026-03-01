@@ -35,7 +35,7 @@ export default function Logistics() {
               <Wheat size={20} className="text-harvest" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground tracking-tight">Harvest Logistics</h1>
+              <h1 className="text-lg font-bold text-foreground tracking-tight">Grain Logistics</h1>
               <p className="text-xs font-mono text-muted-foreground">{bins.length} BINS · INVENTORY</p>
             </div>
           </div>

@@ -27,7 +27,7 @@ const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[
   { key: 'spray', icon: Droplets, label: 'Spraying', color: 'text-spray' },
   { key: 'harvest', icon: Wheat, label: 'Harvesting', color: 'text-harvest' },
   { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-harvest' },
-  { key: 'grain', icon: Warehouse, label: 'Logistics', color: 'text-harvest' },
+  { key: 'grain', icon: Warehouse, label: 'Grain', color: 'text-harvest' },
 ];
 
 export default function Activity() {
