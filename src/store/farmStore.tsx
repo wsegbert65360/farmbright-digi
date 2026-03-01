@@ -117,7 +117,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       setSession(initialSession);
 
       if (initialSession?.user) {
-        console.log('Session initialized:', initialSession.user.id);
         const jwtFarmId = initialSession.user.app_metadata?.farm_id || initialSession.user.user_metadata?.farm_id;
         if (jwtFarmId) setFarmId(jwtFarmId);
       }
@@ -607,14 +606,11 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       boundary: f.boundary
     };
 
-    console.log('Attempting to add field:', fieldDataWithId);
-
     const { data: insertData, error } = await supabase.from('fields').insert([fieldDataWithId]).select();
 
     if (error) {
       console.error('Supabase error adding field:', error);
     } else {
-      console.log('Successfully added field:', insertData);
     }
   }, [farm_id]);
 
@@ -638,14 +634,11 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       deleted_at: f.deleted_at
     };
 
-    console.log('Attempting to update field:', updateData);
-
     const { data: upsertData, error } = await supabase.from('fields').upsert(updateData).select();
 
     if (error) {
       console.error('Supabase error updating field:', error);
     } else {
-      console.log('Successfully updated field:', upsertData);
     }
   }, [farm_id]);
 
@@ -825,7 +818,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         setViewingSeason(backupData.activeSeason);
       }
 
-      console.log('Restore complete!');
     } catch (err) {
       console.error('Restore failed:', err);
       // alert('Restore failed. Please check console.');

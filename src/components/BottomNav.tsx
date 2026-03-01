@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Map, Wheat, ClipboardList, FileText, Settings } from 'lucide-react';
 
-// v1.2.2 - Relabeled Logistics to Grain
+// v1.2.3 - Production Guard Hardening: Global Harvest labeling
 const tabs = [
   { path: '/', icon: Map, label: 'Fields' },
-  { path: '/logistics', icon: Wheat, label: 'Grain' },
+  { path: '/logistics', icon: Wheat, label: 'Harvest' },
   { path: '/activity', icon: ClipboardList, label: 'Activity' },
   { path: '/reports', icon: FileText, label: 'Reports' },
   { path: '/settings', icon: Settings, label: 'Setup' },
