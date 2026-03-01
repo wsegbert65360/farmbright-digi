@@ -19,8 +19,6 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
   const { addPlantRecord, updatePlantRecord, savedSeeds } = useFarm();
   const [seedVariety, setSeedVariety] = useState(initialData?.seedVariety || '');
   const [crop, setCrop] = useState(initialData?.crop || '');
-  const [fsaFarm, setFsaFarm] = useState(initialData?.fsaFarmNumber || '');
-  const [fsaTract, setFsaTract] = useState(initialData?.fsaTractNumber || '');
   const [intendedUse, setIntendedUse] = useState(initialData?.intendedUse || field.intendedUse || '');
   const [producerShare, setProducerShare] = useState(initialData?.producerShare?.toString() || field.producerShare?.toString() || '100');
   const [irrigationPractice, setIrrigationPractice] = useState<'Irrigated' | 'Non-Irrigated'>(initialData?.irrigationPractice || field.irrigationPractice || 'Non-Irrigated');
@@ -56,8 +54,6 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
     if (!initialData) {
       setSeedVariety('');
       setCrop('');
-      setFsaFarm('');
-      setFsaTract('');
       setIntendedUse('');
     }
     onClose();
@@ -156,9 +152,6 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
                 onChange={e => setProducerShare(e.target.value)}
                 className="mt-1 bg-muted border-border text-foreground font-mono"
               />
-              <div className="text-[10px] text-muted-foreground mt-0.5 text-right font-mono uppercase">
-                FSA 578 Certification
-              </div>
             </div>
           </div>
         </div>

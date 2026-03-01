@@ -23,8 +23,6 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
   const [landlordSplit, setLandlordSplit] = useState(initialData?.landlordSplitPercent?.toString() || '');
   const [bushels, setBushels] = useState(initialData?.bushels?.toString() || '');
   const [crop, setCrop] = useState(initialData?.crop || '');
-  const [fsaFarm, setFsaFarm] = useState(initialData?.fsaFarmNumber || field.fsaFarmNumber || '');
-  const [fsaTract, setFsaTract] = useState(initialData?.fsaTractNumber || field.fsaTractNumber || '');
   const [harvestDate, setHarvestDate] = useState(initialData?.harvestDate || new Date().toISOString().split('T')[0]);
 
   const reset = () => {
