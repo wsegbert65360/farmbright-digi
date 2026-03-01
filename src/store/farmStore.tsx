@@ -8,6 +8,7 @@ import {
   mapHarvestToDb, mapHayToDb, mapGrainToDb, mapSeedToDb, mapRecipeToDb
 } from '../lib/mappers';
 import { Session } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 const DEFAULT_FIELDS: Field[] = [
   { id: 'f1', name: 'Back Forty', acreage: 40, lat: 41.88, lng: -93.09 },
@@ -126,7 +127,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     initSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      console.log('Auth state changed:', _event);
+      // Auth state changed
+
       setSession(newSession);
       if (newSession?.user) {
         const jwtFarmId = newSession.user.app_metadata?.farm_id || newSession.user.user_metadata?.farm_id;
@@ -153,7 +155,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
           // Auto-create farm if missing
           if (!currentFarmId) {
-            console.log('No farm found. Creating...');
+            // No farm found
+
             const { data: nf } = await supabase.from('farms').insert([{ name: 'My Farm' }]).select().single();
             if (nf) {
               currentFarmId = nf.id;
@@ -166,7 +169,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             // ONLY refresh if the JWT is actually missing the ID
             const jwtId = session.user.app_metadata?.farm_id || session.user.user_metadata?.farm_id;
             if (currentFarmId !== jwtId) {
-              console.log('JWT/Profile mismatch. Syncing session...');
               await supabase.auth.refreshSession();
             }
             if (profileData.active_season) {
@@ -279,6 +281,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding plant record:', error);
       setPlantRecords(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save planting record');
+    } else {
+      toast.success('Planting record saved!');
     }
   }, [activeSeason, farm_id]);
 
@@ -304,7 +309,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(r.timestamp).toISOString()
     });
 
-    if (error) console.error('Error updating plant record:', error);
+    if (error) {
+      console.error('Error updating plant record:', error);
+      toast.error('Failed to update record');
+    } else {
+      toast.success('Record updated');
+    }
+
   }, [farm_id]);
 
   const addSprayRecord = useCallback(async (r: Omit<SprayRecord, 'id' | 'timestamp'>) => {
@@ -344,6 +355,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding spray record:', error);
       setSprayRecords(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save spray record');
+    } else {
+      toast.success('Spray application recorded!');
     }
   }, [activeSeason, farm_id]);
 
@@ -377,7 +391,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(r.timestamp).toISOString()
     });
 
-    if (error) console.error('Error updating spray record:', error);
+    if (error) {
+      console.error('Error updating spray record:', error);
+      toast.error('Failed to update spray record');
+    } else {
+      toast.success('Spray record updated');
+    }
+
   }, [farm_id]);
 
   const addHarvestRecord = useCallback(async (r: Omit<HarvestRecord, 'id' | 'timestamp'>) => {
@@ -408,6 +428,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding harvest record:', error);
       setHarvestRecords(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save harvest');
+    } else {
+      toast.success('Harvest recorded!');
     }
   }, [activeSeason, farm_id]);
 
@@ -432,7 +455,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(r.timestamp).toISOString()
     });
 
-    if (error) console.error('Error updating harvest record:', error);
+    if (error) {
+      console.error('Error updating harvest record:', error);
+      toast.error('Failed to update harvest');
+    } else {
+      toast.success('Harvest updated');
+    }
+
   }, [farm_id]);
 
   const addHayHarvestRecord = useCallback(async (r: Omit<HayHarvestRecord, 'id' | 'timestamp'>) => {
@@ -460,6 +489,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding hay harvest record:', error);
       setHayHarvestRecords(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save hay record');
+    } else {
+      toast.success('Hay harvest recorded!');
     }
   }, [activeSeason, farm_id]);
 
@@ -481,7 +513,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(r.timestamp).toISOString()
     });
 
-    if (error) console.error('Error updating hay harvest record:', error);
+    if (error) {
+      console.error('Error updating hay harvest record:', error);
+      toast.error('Failed to update hay record');
+    } else {
+      toast.success('Hay record updated');
+    }
+
   }, [farm_id]);
 
   const addGrainMovement = useCallback(async (r: Omit<GrainMovement, 'id'> & { timestamp?: number }) => {
@@ -509,6 +547,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding grain movement:', error);
       setGrainMovements(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to record movement');
+    } else {
+      toast.success('Grain movement recorded!');
     }
   }, [activeSeason, farm_id]);
 
@@ -540,7 +581,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting grain movements:', error);
+    if (error) {
+      console.error('Error deleting grain movements:', error);
+      toast.error('Delete failed');
+    } else {
+      toast.success('Records removed');
+    }
+
   }, [farm_id]);
 
   const deletePlantRecords = useCallback(async (ids: string[]) => {
@@ -786,7 +833,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     setLoading(true);
     try {
-      console.log('Restoring from backup...', backupData);
+      // Restore from backup
+
 
       // 1. Map data back to DB format
       const fieldsToDb = (backupData.fields || []).map((f: any) => ({ ...mapFieldToDb(f), farm_id }));

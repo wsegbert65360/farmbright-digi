@@ -38,7 +38,7 @@ export function useFieldRainfall(fields: Field[]) {
       }
 
       try {
-        console.log(`Fetching rain for field ${f.name}...`);
+        // Fetching rain
         const value = await fetchRain24h(f.lat, f.lng);
         results[f.id] = value;
         rainCache[f.id] = { value, timestamp: now };
