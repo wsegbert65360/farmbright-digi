@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -55,6 +56,10 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 142 72% 50%;
+
+    /* Safe Area Insets for iPhone PWA */
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -68,15 +73,19 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     user-select: none;
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
   }
 
   /* Scrollbar styling for OLED */
   ::-webkit-scrollbar {
     width: 4px;
   }
+
   ::-webkit-scrollbar-track {
     background: hsl(0 0% 0%);
   }
+
   ::-webkit-scrollbar-thumb {
     background: hsl(0 0% 20%);
     border-radius: 4px;
@@ -87,15 +96,19 @@
   .glow-plant {
     box-shadow: 0 0 20px hsl(142 72% 50% / 0.35), 0 0 40px hsl(142 72% 50% / 0.15);
   }
+
   .glow-spray {
     box-shadow: 0 0 20px hsl(210 100% 55% / 0.35), 0 0 40px hsl(210 100% 55% / 0.15);
   }
+
   .glow-harvest {
     box-shadow: 0 0 20px hsl(45 100% 55% / 0.35), 0 0 40px hsl(45 100% 55% / 0.15);
   }
+
   .glow-destructive {
     box-shadow: 0 0 20px hsl(0 85% 55% / 0.35), 0 0 40px hsl(0 85% 55% / 0.15);
   }
+
   .touch-target {
     min-width: 64px;
     min-height: 64px;

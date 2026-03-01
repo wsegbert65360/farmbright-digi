@@ -12,37 +12,61 @@ async function fetchRain24h(lat: number, lng: number): Promise<number> {
   return precip.reduce((sum, v) => sum + (v || 0), 0);
 }
 
+// Cache to prevent multiple components from triggering the same fetch
+const rainCache: Record<string, { value: number; timestamp: number }> = {};
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
 // Staggered fetch for all fields to avoid rate-limiting
 export function useFieldRainfall(fields: Field[]) {
   const [rain, setRain] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const loadAll = useCallback(async () => {
+    if (loading || fields.length === 0) return;
     setLoading(true);
-    const results: Record<string, number> = {};
+
+    const results: Record<string, number> = { ...rain };
+    const now = Date.now();
 
     for (let i = 0; i < fields.length; i++) {
       const f = fields[i];
-      try {
-        results[f.id] = await fetchRain24h(f.lat, f.lng);
-      } catch {
-        results[f.id] = 0;
+
+      // Check cache first
+      if (rainCache[f.id] && (now - rainCache[f.id].timestamp < CACHE_TTL)) {
+        results[f.id] = rainCache[f.id].value;
+        continue;
       }
+
+      try {
+        console.log(`Fetching rain for field ${f.name}...`);
+        const value = await fetchRain24h(f.lat, f.lng);
+        results[f.id] = value;
+        rainCache[f.id] = { value, timestamp: now };
+      } catch (err) {
+        console.warn(`Rain fetch failed for ${f.id}:`, err);
+        results[f.id] = results[f.id] || 0;
+      }
+
+      // Update state incrementally
       setRain({ ...results });
-      // Stagger requests by 500ms to avoid 429s
+
+      // Stagger requests more aggressively (1 second) to avoid 429s
       if (i < fields.length - 1) {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
-
     setLoading(false);
-  }, [fields]);
+  }, [fields, loading, rain]);
 
   useEffect(() => {
-    if (fields.length > 0) loadAll();
-    const interval = setInterval(loadAll, 600000); // refresh every 10 min
-    return () => clearInterval(interval);
-  }, [loadAll]);
+    // Only run if we don't have data for all fields or if cache is stale
+    const needsUpdate = fields.some(f => !rainCache[f.id] || (Date.now() - rainCache[f.id].timestamp > CACHE_TTL));
+
+    if (needsUpdate) {
+      const timeout = setTimeout(loadAll, 1000); // Small delay to let UI settle
+      return () => clearTimeout(timeout);
+    }
+  }, [fields.length]); // Only run when field count changes or on mount
 
   return { rain, loading };
 }

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFarm } from '@/store/farmStore';
-import { AlertTriangle, Database, ArrowRight, History } from 'lucide-react';
+import { AlertTriangle, Database, ArrowRight, History, Upload, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function SeasonRolloverModal() {
-    const { activeSeason, rolloverToNewSeason } = useFarm();
+    const { activeSeason, rolloverToNewSeason, restoreFromBackup } = useFarm();
     const [open, setOpen] = useState(false);
+    const [restoring, setRestoring] = useState(false);
+    const [restoreSuccess, setRestoreSuccess] = useState(false);
     const currentYear = new Date().getFullYear();
 
     useEffect(() => {
@@ -14,11 +16,38 @@ export default function SeasonRolloverModal() {
         if (activeSeason < currentYear) {
             setOpen(true);
         }
+
+        // Listen for manual trigger from Index.tsx
+        const handleManualOpen = () => setOpen(true);
+        window.addEventListener('open-rollover', handleManualOpen);
+        return () => window.removeEventListener('open-rollover', handleManualOpen);
     }, [activeSeason, currentYear]);
 
     const handleRollover = () => {
         rolloverToNewSeason(currentYear);
         setOpen(false);
+    };
+
+    const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setRestoring(true);
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            await restoreFromBackup(data);
+            setRestoreSuccess(true);
+            setTimeout(() => {
+                setRestoreSuccess(false);
+                setOpen(false);
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to restore:', err);
+            alert('Invalid backup file format.');
+        } finally {
+            setRestoring(false);
+        }
     };
 
     return (
@@ -60,6 +89,39 @@ export default function SeasonRolloverModal() {
                             <li><span className="text-foreground">Data Carry-over:</span> Fields, Bin names, and Spray Recipes persist.</li>
                             <li><span className="text-foreground">Initialization:</span> Active dashboard is cleared for {currentYear}.</li>
                         </ul>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/50">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <h4 className="text-[10px] font-bold uppercase font-mono text-muted-foreground">Restore from Backup</h4>
+                                <p className="text-[9px] font-mono text-muted-foreground/70 italic">Have a previous JSON backup? Upload it here.</p>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    accept=".json"
+                                    onChange={handleRestore}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    disabled={restoring}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-[10px] font-mono gap-1.5 border-dashed"
+                                    disabled={restoring}
+                                >
+                                    {restoring ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                    ) : restoreSuccess ? (
+                                        <CheckCircle2 size={12} className="text-green-500" />
+                                    ) : (
+                                        <Upload size={12} />
+                                    )}
+                                    {restoring ? 'RESTORING...' : restoreSuccess ? 'DONE' : 'UPLOAD JSON'}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

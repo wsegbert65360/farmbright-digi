@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.fields (
     acreage DECIMAL NOT NULL,
     lat DECIMAL,
     lng DECIMAL,
+    boundary JSONB,
     -- FSA compliance columns
     fsa_farm_number TEXT,
     fsa_tract_number TEXT,
@@ -224,12 +225,11 @@ BEGIN
             CREATE POLICY "tenant_isolation" ON public.%I
             FOR ALL
             USING (
-                (farm_id = (auth.jwt() -> 'app_metadata' ->> 'farm_id')::uuid)
-                AND deleted_at IS NULL
+                (farm_id = (auth.jwt() -> ''app_metadata'' ->> ''farm_id'')::uuid)
             )
             WITH CHECK (
-                (farm_id = (auth.jwt() -> 'app_metadata' ->> 'farm_id')::uuid)
-            )', t);
+                (farm_id = (auth.jwt() -> ''app_metadata'' ->> ''farm_id'')::uuid)
+            )', t, t);
     END LOOP;
 END $$;
 
@@ -272,8 +272,8 @@ CREATE OR REPLACE FUNCTION public.sync_farm_id_to_auth()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE auth.users
-    SET raw_app_metadata = 
-        coalesce(raw_app_metadata, '{}'::jsonb) || 
+    SET raw_app_meta_data = 
+        coalesce(raw_app_meta_data, '{}'::jsonb) || 
         jsonb_build_object('farm_id', NEW.farm_id)
     WHERE id = NEW.id;
     RETURN NEW;

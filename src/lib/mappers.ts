@@ -114,6 +114,7 @@ export const mapFieldFromDb = (db: any): Field => ({
     producerShare: db.producer_share,
     irrigationPractice: db.irrigation_practice,
     intendedUse: db.intended_use,
+    boundary: db.boundary,
     farm_id: db.farm_id,
     deleted_at: db.deleted_at
 });
@@ -143,4 +144,149 @@ export const mapRecipeFromDb = (db: any): SprayRecipe => ({
     epaRegNumber: db.epa_reg_number,
     farm_id: db.farm_id,
     deleted_at: db.deleted_at
+});
+
+// --- Reverse Mappers (Frontend -> DB) ---
+
+export const mapPlantToDb = (r: PlantRecord) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    field_id: r.fieldId,
+    field_name: r.fieldName,
+    seed_variety: r.seedVariety,
+    acreage: r.acreage,
+    crop: r.crop,
+    plant_date: r.plantDate,
+    fsa_farm_number: r.fsaFarmNumber,
+    fsa_tract_number: r.fsaTractNumber,
+    fsa_field_number: r.fsaFieldNumber,
+    intended_use: r.intendedUse,
+    producer_share: r.producerShare,
+    irrigation_practice: r.irrigationPractice,
+    season_year: r.seasonYear,
+    timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString(),
+    deleted_at: r.deleted_at
+});
+
+export const mapSprayToDb = (r: SprayRecord) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    field_id: r.fieldId,
+    field_name: r.fieldName,
+    product: r.product,
+    products: r.products,
+    wind_speed: r.windSpeed,
+    temperature: r.temperature,
+    spray_date: r.sprayDate,
+    start_time: r.startTime,
+    equipment_id: r.equipmentId,
+    applicator_name: r.applicatorName,
+    license_number: r.licenseNumber,
+    epa_reg_number: r.epaRegNumber,
+    season_year: r.seasonYear,
+    timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString(),
+    deleted_at: r.deleted_at,
+    target_pest: r.targetPest,
+    wind_direction: r.windDirection,
+    relative_humidity: r.relativeHumidity,
+    treated_area_size: r.treatedAreaSize,
+    total_amount_applied: r.totalAmountApplied,
+    involved_technicians: r.involvedTechnicians,
+    mixture_rate: r.mixtureRate,
+    total_mixture_volume: r.totalMixtureVolume
+});
+
+export const mapHarvestToDb = (r: HarvestRecord) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    field_id: r.fieldId,
+    field_name: r.fieldName,
+    destination: r.destination,
+    bin_id: r.binId,
+    bushels: r.bushels,
+    moisture_percent: r.moisturePercent,
+    landlord_split_percent: r.landlordSplitPercent,
+    harvest_date: r.harvestDate,
+    fsa_farm_number: r.fsaFarmNumber,
+    fsa_tract_number: r.fsaTractNumber,
+    season_year: r.seasonYear,
+    timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString(),
+    crop: r.crop,
+    deleted_at: r.deleted_at
+});
+
+export const mapHayToDb = (r: HayHarvestRecord) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    field_id: r.fieldId,
+    field_name: r.fieldName,
+    date: r.date,
+    bale_count: r.baleCount,
+    cutting_number: r.cuttingNumber,
+    bale_type: r.baleType,
+    temperature: r.temperature,
+    conditions: r.conditions,
+    season_year: r.seasonYear,
+    timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString(),
+    deleted_at: r.deleted_at
+});
+
+export const mapGrainToDb = (m: GrainMovement) => ({
+    id: m.id,
+    farm_id: m.farm_id,
+    bin_id: m.binId,
+    bin_name: m.binName,
+    type: m.type,
+    bushels: m.bushels,
+    moisture_percent: m.moisturePercent,
+    source_field_name: m.sourceFieldName,
+    destination: m.destination,
+    price: m.price,
+    season_year: m.seasonYear,
+    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : new Date().toISOString(),
+    deleted_at: m.deleted_at
+});
+
+export const mapFieldToDb = (f: Field) => ({
+    id: f.id,
+    farm_id: f.farm_id,
+    name: f.name,
+    acreage: f.acreage,
+    lat: f.lat,
+    lng: f.lng,
+    fsa_farm_number: f.fsaFarmNumber,
+    fsa_tract_number: f.fsaTractNumber,
+    fsa_field_number: f.fsaFieldNumber,
+    producer_share: f.producerShare,
+    irrigation_practice: f.irrigationPractice,
+    intended_use: f.intendedUse,
+    boundary: f.boundary,
+    deleted_at: f.deleted_at
+});
+
+export const mapBinToDb = (b: Bin) => ({
+    id: b.id,
+    farm_id: b.farm_id,
+    name: b.name,
+    capacity: b.capacity,
+    deleted_at: b.deleted_at
+});
+
+export const mapSeedToDb = (s: SavedSeed) => ({
+    id: s.id,
+    farm_id: s.farm_id,
+    name: s.name,
+    deleted_at: s.deleted_at
+});
+
+export const mapRecipeToDb = (r: SprayRecipe) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    name: r.name,
+    products: r.products,
+    applicator_name: r.applicatorName,
+    license_number: r.licenseNumber,
+    target_pest: r.targetPest,
+    epa_reg_number: r.epaRegNumber,
+    deleted_at: r.deleted_at
 });

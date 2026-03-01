@@ -1,15 +1,48 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFarm } from '@/store/farmStore';
 import { Field } from '@/types/farm';
-import { MapPin, Plus, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Plus, Pencil, Trash2, Map as MapIcon, RotateCcw, Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+// Leaflet & GIS
+import { MapContainer, TileLayer, Marker, Polygon, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import { calculateAcreage } from '@/lib/gisService';
+
+// Fix for default marker icon in Vite
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+function MapInteraction({ onPointAdd, isCapturing }: { onPointAdd: (latlng: [number, number]) => void; isCapturing: boolean }) {
+  useMapEvents({
+    click(e) {
+      if (isCapturing) {
+        onPointAdd([e.latlng.lat, e.latlng.lng]);
+      }
+    },
+  });
+  return null;
+}
+
+// Helper to update map view when geolocation is found
+function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMapEvents({});
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+}
 
 interface FieldManageModalProps {
   open: boolean;
@@ -30,7 +63,53 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
   const [irrigation, setIrrigation] = useState<Field['irrigationPractice']>(editField?.irrigationPractice || 'Non-Irrigated');
   const [intendedUse, setIntendedUse] = useState(editField?.intendedUse || 'Grain');
 
+  // GIS State
+  const [points, setPoints] = useState<[number, number][]>(editField?.boundary?.coordinates?.[0]?.slice(0, -1).map((c: any) => [c[1], c[0]]) || []);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(points.length > 0 ? points[0] : [38.5, -92.5]);
+  const [mapZoom, setMapZoom] = useState(points.length > 0 ? 15 : 4);
+
+  // Attempt Geolocation on Mount if no field is being edited
+  useEffect(() => {
+    if (!editField && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const newCenter: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          setMapCenter(newCenter);
+          setMapZoom(15); // Zoomed in for ~300 acres
+        },
+        (err) => console.warn('Geolocation error:', err),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, [editField]);
+
   const isEdit = !!editField;
+
+  const handlePointAdd = useCallback(async (latlng: [number, number]) => {
+    const newPoints = [...points, latlng];
+    setPoints(newPoints);
+
+    if (newPoints.length === 1) {
+      setLat(latlng[0].toFixed(6));
+      setLng(latlng[1].toFixed(6));
+    }
+
+    if (newPoints.length >= 3) {
+      const geojson = {
+        type: 'Polygon',
+        coordinates: [[...newPoints, newPoints[0]].map(p => [p[1], p[0]])]
+      };
+      const area = calculateAcreage(geojson);
+      setAcreage(area.toString());
+    }
+  }, [points]);
+
+  const clearPoints = () => {
+    setPoints([]);
+    setAcreage('');
+    setIsCapturing(true);
+  };
 
   const handleSubmit = () => {
     const ac = parseFloat(acreage);
@@ -38,11 +117,20 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
     const ln = parseFloat(lng);
     if (!name.trim() || isNaN(ac) || isNaN(la) || isNaN(ln)) return;
 
+    let boundary = null;
+    if (points.length >= 3) {
+      boundary = {
+        type: 'Polygon',
+        coordinates: [[...points, points[0]].map(p => [p[1], p[0]])]
+      };
+    }
+
     const fieldData = {
       name: name.trim(),
       acreage: ac,
       lat: la,
       lng: ln,
+      boundary,
       fsaFarmNumber: fsaFarm.trim() || undefined,
       fsaTractNumber: fsaTract.trim() || undefined,
       fsaFieldNumber: fsaField.trim() || undefined,
@@ -63,34 +151,99 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-primary/30 max-w-sm">
+      <DialogContent className="bg-card border-primary/30 max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
             {isEdit ? <Pencil size={20} /> : <Plus size={20} />}
             {isEdit ? 'Edit Field' : 'Add Field'}
           </DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4 py-2">
-          <div>
-            <Label className="text-muted-foreground font-mono text-xs">FIELD NAME</Label>
-            <Input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. North 80"
-              className="mt-1 bg-muted border-border text-foreground"
-              autoFocus
-            />
+          {/* Map Preview / Drawing Area */}
+          <div className="relative group">
+            <div className="h-48 w-full rounded-lg overflow-hidden border border-border bg-muted mb-2 z-0">
+              <MapContainer
+                center={mapCenter}
+                zoom={mapZoom}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                />
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                />
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+                />
+                <ChangeView center={mapCenter} zoom={mapZoom} />
+                <MapInteraction onPointAdd={handlePointAdd} isCapturing={isCapturing} />
+                {points.map((p, i) => (
+                  <Marker key={i} position={p} />
+                ))}
+                {points.length >= 2 && (
+                  <Polygon positions={points.length >= 3 ? [...points, points[0]] : points} pathOptions={{ color: 'var(--primary)' }} />
+                )}
+              </MapContainer>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant={isCapturing ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setIsCapturing(!isCapturing)}
+                className="flex-1 font-mono text-[10px]"
+              >
+                <MapIcon size={14} className="mr-2" />
+                {isCapturing ? 'TAP MAP TO DRAW' : 'ENABLE MAP DRAWING'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearPoints}
+                className="px-3"
+              >
+                <RotateCcw size={14} />
+              </Button>
+            </div>
           </div>
-          <div>
-            <Label className="text-muted-foreground font-mono text-xs">ACREAGE</Label>
-            <Input
-              type="number"
-              value={acreage}
-              onChange={e => setAcreage(e.target.value)}
-              placeholder="0"
-              className="mt-1 bg-muted border-border text-foreground"
-            />
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label className="text-muted-foreground font-mono text-xs">FIELD NAME</Label>
+              <Input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g. North 80"
+                className="mt-1 bg-muted border-border text-foreground"
+                autoFocus
+              />
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs flex items-center gap-1">
+                ACREAGE {points.length >= 3 && <span className="text-[10px] text-primary">(AUTO)</span>}
+              </Label>
+              <Input
+                type="number"
+                value={acreage}
+                onChange={e => setAcreage(e.target.value)}
+                placeholder="0"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
+            <div>
+              <Label className="text-muted-foreground font-mono text-xs">FSA FIELD #</Label>
+              <Input
+                value={fsaField}
+                onChange={e => setFsaField(e.target.value)}
+                placeholder="1"
+                className="mt-1 bg-muted border-border text-foreground"
+              />
+            </div>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-muted-foreground font-mono text-xs flex items-center gap-1">
@@ -98,11 +251,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               </Label>
               <Input
                 type="number"
-                step="0.001"
+                step="0.000001"
                 value={lat}
                 onChange={e => setLat(e.target.value)}
-                placeholder="41.88"
-                className="mt-1 bg-muted border-border text-foreground"
+                className="mt-1 bg-muted border-border text-foreground font-mono text-xs"
               />
             </div>
             <div>
@@ -111,84 +263,63 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               </Label>
               <Input
                 type="number"
-                step="0.001"
+                step="0.000001"
                 value={lng}
                 onChange={e => setLng(e.target.value)}
-                placeholder="-93.09"
-                className="mt-1 bg-muted border-border text-foreground"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">FSA Farm #</Label>
-              <Input
-                value={fsaFarm}
-                onChange={e => setFsaFarm(e.target.value)}
-                placeholder="1234"
-                className="mt-1 bg-muted border-border text-foreground"
-              />
-            </div>
-            <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">FSA Tract #</Label>
-              <Input
-                value={fsaTract}
-                onChange={e => setFsaTract(e.target.value)}
-                placeholder="5678"
-                className="mt-1 bg-muted border-border text-foreground"
+                className="mt-1 bg-muted border-border text-foreground font-mono text-xs"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">FSA Field #</Label>
-              <Input
-                value={fsaField}
-                onChange={e => setFsaField(e.target.value)}
-                placeholder="1"
-                className="mt-1 bg-muted border-border text-foreground"
-              />
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-primary font-mono text-[10px] font-bold">FSA COMPLIANCE DATA</Label>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground font-mono text-xs uppercase">FSA Farm #</Label>
+                <Input
+                  value={fsaFarm}
+                  onChange={e => setFsaFarm(e.target.value)}
+                  placeholder="Enter Farm #"
+                  className="mt-1 bg-background border-border text-foreground h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-muted-foreground font-mono text-xs uppercase">Tract #</Label>
+                <Input
+                  value={fsaTract}
+                  onChange={e => setFsaTract(e.target.value)}
+                  placeholder="Enter Tract #"
+                  className="mt-1 bg-background border-border text-foreground h-8 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/20">
             <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Producer Share %</Label>
+              <Label className="text-muted-foreground font-mono text-xs uppercase">Producer Share %</Label>
               <Input
                 type="number"
-                step="1"
-                min="0"
-                max="100"
                 value={producerShare}
                 onChange={e => setProducerShare(e.target.value)}
-                placeholder="100"
-                className="mt-1 bg-muted border-border text-foreground"
+                className="mt-1 bg-muted border-border text-foreground font-mono"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pb-2">
             <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Irrigation</Label>
-              <select
-                value={irrigation}
-                onChange={e => setIrrigation(e.target.value as any)}
-                className="flex h-9 w-full rounded-md border border-border bg-muted px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mt-1"
-              >
-                <option value="Non-Irrigated">Non-Irrigated</option>
-                <option value="Irrigated">Irrigated</option>
-              </select>
-            </div>
-            <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase tracking-wider">Intended Use</Label>
+              <Label className="text-muted-foreground font-mono text-xs uppercase">Intended Use</Label>
               <Input
                 value={intendedUse}
                 onChange={e => setIntendedUse(e.target.value)}
-                placeholder="Grain"
                 className="mt-1 bg-muted border-border text-foreground"
               />
             </div>
           </div>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="mt-4">
           <Button
             onClick={handleSubmit}
             disabled={!valid}
@@ -202,7 +333,6 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
   );
 }
 
-// Standalone field list management component
 export function FieldManager() {
   const { fields, deleteField } = useFarm();
   const [editField, setEditField] = useState<Field | null>(null);
@@ -220,7 +350,7 @@ export function FieldManager() {
           Add New Field
         </button>
 
-        {fields.map(field => (
+        {fields.filter(f => !f.deleted_at).map(field => (
           <div key={field.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
             <div>
               <span className="font-bold text-foreground text-sm">{field.name}</span>

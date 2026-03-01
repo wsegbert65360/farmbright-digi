@@ -2,10 +2,11 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import { Field, PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord, Bin, GrainMovement, SavedSeed, SprayRecipe } from '@/types/farm';
 import { supabase } from '@/lib/supabase';
 import {
-  mapPlantFromDb, mapSprayFromDb, mapHarvestFromDb,
-  mapHayFromDb, mapGrainFromDb, mapFieldFromDb,
-  mapBinFromDb, mapSeedFromDb, mapRecipeFromDb
-} from '@/lib/mappers';
+  mapFieldFromDb, mapBinFromDb, mapPlantFromDb, mapSprayFromDb,
+  mapHarvestFromDb, mapHayFromDb, mapGrainFromDb, mapSeedFromDb, mapRecipeFromDb,
+  mapFieldToDb, mapBinToDb, mapPlantToDb, mapSprayToDb,
+  mapHarvestToDb, mapHayToDb, mapGrainToDb, mapSeedToDb, mapRecipeToDb
+} from '../lib/mappers';
 import { Session } from '@supabase/supabase-js';
 
 const DEFAULT_FIELDS: Field[] = [
@@ -87,6 +88,7 @@ interface FarmState {
   deleteSprayRecipe: (id: string) => void;
   signOut: () => void;
   farm_id: string | null;
+  restoreFromBackup: (data: any) => Promise<void>;
 }
 
 const FarmContext = createContext<FarmState | null>(null);
@@ -108,37 +110,87 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [viewingSeason, setViewingSeason] = useState<number>(() => loadFromStorage('ff_active_season', new Date().getFullYear()));
   const [farm_id, setFarmId] = useState<string | null>(() => loadFromStorage('ff_farm_id', null));
 
-  // Initialize Supabase session
+  // Initialize Supabase session & handle Auth Changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user?.id) {
-        // Extract farm_id from JWT if present, or fetch from profiles
-        const jwtFarmId = session.user.app_metadata?.farm_id || session.user.user_metadata?.farm_id;
+    const initSession = async () => {
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+
+      if (initialSession?.user) {
+        console.log('Session initialized:', initialSession.user.id);
+        const jwtFarmId = initialSession.user.app_metadata?.farm_id || initialSession.user.user_metadata?.farm_id;
         if (jwtFarmId) setFarmId(jwtFarmId);
       }
       setLoading(false);
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    initSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      console.log('Auth state changed:', _event);
+      setSession(newSession);
+      if (newSession?.user) {
+        const jwtFarmId = newSession.user.app_metadata?.farm_id || newSession.user.user_metadata?.farm_id;
+        if (jwtFarmId) setFarmId(jwtFarmId);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch data from Supabase when session changes
+  // Sync farm_id from Profile to JWT (One-way stabilization)
   useEffect(() => {
-    if (session) {
+    if (!session || !session.user) return;
+
+    const syncAuth = async () => {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('farm_id, active_season')
+          .single();
+
+        if (profileData) {
+          let currentFarmId = profileData.farm_id;
+
+          // Auto-create farm if missing
+          if (!currentFarmId) {
+            console.log('No farm found. Creating...');
+            const { data: nf } = await supabase.from('farms').insert([{ name: 'My Farm' }]).select().single();
+            if (nf) {
+              currentFarmId = nf.id;
+              await supabase.from('profiles').update({ farm_id: currentFarmId }).eq('id', session.user.id);
+            }
+          }
+
+          if (currentFarmId) {
+            setFarmId(currentFarmId);
+            // ONLY refresh if the JWT is actually missing the ID
+            const jwtId = session.user.app_metadata?.farm_id || session.user.user_metadata?.farm_id;
+            if (currentFarmId !== jwtId) {
+              console.log('JWT/Profile mismatch. Syncing session...');
+              await supabase.auth.refreshSession();
+            }
+            if (profileData.active_season) {
+              setActiveSeason(profileData.active_season);
+              setViewingSeason(profileData.active_season);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Sync error:', err);
+      }
+    };
+
+    syncAuth();
+  }, [session?.user?.id]); // Only runs when user changes
+
+  // Fetch data only when farm_id is stable
+  useEffect(() => {
+    if (session && farm_id) {
       const fetchData = async () => {
         setLoading(true);
         try {
-          // Fetch all data in parallel from structured tables
-          const query = (table: string) => {
-            let q = supabase.from(table).select('*').is('deleted_at', null);
-            if (farm_id) q = q.eq('farm_id', farm_id);
-            return q;
-          };
+          const query = (table: string) => supabase.from(table).select('*').eq('farm_id', farm_id).is('deleted_at', null);
 
           const [
             { data: fieldsData },
@@ -149,8 +201,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             { data: hayData },
             { data: grainData },
             { data: seedsData },
-            { data: recipesData },
-            { data: profileData }
+            { data: recipesData }
           ] = await Promise.all([
             query('fields'),
             query('bins'),
@@ -160,8 +211,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             query('hay_harvest_records'),
             query('grain_movements'),
             query('saved_seeds'),
-            query('spray_recipes'),
-            supabase.from('profiles').select('farm_id, active_season').single()
+            query('spray_recipes')
           ]);
 
           if (fieldsData) setFields(fieldsData.map(mapFieldFromDb));
@@ -174,22 +224,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           if (seedsData) setSavedSeeds(seedsData.map(mapSeedFromDb));
           if (recipesData) setSprayRecipes(recipesData.map(mapRecipeFromDb));
 
-          if (profileData) {
-            if (profileData.farm_id) setFarmId(profileData.farm_id);
-            if (profileData.active_season) {
-              setActiveSeason(profileData.active_season);
-              setViewingSeason(profileData.active_season);
-            }
-          }
         } catch (error) {
-          console.error('Error fetching farm data:', error);
+          console.error('Error fetching data:', error);
         } finally {
           setLoading(false);
         }
       };
       fetchData();
     }
-  }, [session]);
+  }, [session?.user?.id, farm_id]);
 
   // Note: Local storage persistence is maintained for offline resilience, 
   // but cloud sync is now handled individually by each CRUD operation.
@@ -547,7 +590,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const addField = useCallback(async (f: Omit<Field, 'id'>) => {
     const id = uid();
     setFields(prev => [...prev, { ...f, id }]);
-    const { error } = await supabase.from('fields').insert([{
+
+    const fieldDataWithId = {
       id,
       farm_id,
       name: f.name,
@@ -559,14 +603,25 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       fsa_field_number: f.fsaFieldNumber,
       producer_share: f.producerShare,
       irrigation_practice: f.irrigationPractice,
-      intended_use: f.intendedUse
-    }]);
-    if (error) console.error('Error adding field:', error);
+      intended_use: f.intendedUse,
+      boundary: f.boundary
+    };
+
+    console.log('Attempting to add field:', fieldDataWithId);
+
+    const { data: insertData, error } = await supabase.from('fields').insert([fieldDataWithId]).select();
+
+    if (error) {
+      console.error('Supabase error adding field:', error);
+    } else {
+      console.log('Successfully added field:', insertData);
+    }
   }, [farm_id]);
 
   const updateField = useCallback(async (f: Field) => {
     setFields(prev => prev.map(existing => existing.id === f.id ? f : existing));
-    const { error } = await supabase.from('fields').upsert({
+
+    const updateData = {
       id: f.id,
       farm_id,
       name: f.name,
@@ -579,18 +634,31 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       producer_share: f.producerShare,
       irrigation_practice: f.irrigationPractice,
       intended_use: f.intendedUse,
+      boundary: f.boundary,
       deleted_at: f.deleted_at
-    });
-    if (error) console.error('Error updating field:', error);
+    };
+
+    console.log('Attempting to update field:', updateData);
+
+    const { data: upsertData, error } = await supabase.from('fields').upsert(updateData).select();
+
+    if (error) {
+      console.error('Supabase error updating field:', error);
+    } else {
+      console.log('Successfully updated field:', upsertData);
+    }
   }, [farm_id]);
 
   const deleteField = useCallback(async (id: string) => {
     setFields(prev => prev.map(f =>
       f.id === id ? { ...f, deleted_at: new Date().toISOString() } : f
     ));
-    const { error } = await supabase.from('fields').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase.from('fields')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('farm_id', farm_id); // Redundant check for RLS safety
     if (error) console.error('Error deleting field:', error);
-  }, []);
+  }, [farm_id]);
 
   const addBin = useCallback(async (b: Omit<Bin, 'id'>) => {
     const id = uid();
@@ -675,7 +743,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Error deleting spray recipe:', error);
   }, []);
 
-
   const rolloverToNewSeason = useCallback(async (year: number) => {
     // 1. Force Backup (JSON export)
     const backupData = {
@@ -702,6 +769,70 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       if (error) console.error('Error updating active season:', error);
     }
   }, [fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason, session]);
+
+  const restoreFromBackup = useCallback(async (backupData: any) => {
+    if (!farm_id) {
+      console.error('Cannot restore: No farm_id found');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('Restoring from backup...', backupData);
+
+      // 1. Map data back to DB format
+      const fieldsToDb = (backupData.fields || []).map((f: any) => ({ ...mapFieldToDb(f), farm_id }));
+      const binsToDb = (backupData.bins || []).map((b: any) => ({ ...mapBinToDb(b), farm_id }));
+      const plantsToDb = (backupData.plantRecords || []).map((r: any) => ({ ...mapPlantToDb(r), farm_id }));
+      const spraysToDb = (backupData.sprayRecords || []).map((r: any) => ({ ...mapSprayToDb(r), farm_id }));
+      const harvestsToDb = (backupData.harvestRecords || []).map((r: any) => ({ ...mapHarvestToDb(r), farm_id }));
+      const hayToDb = (backupData.hayHarvestRecords || []).map((r: any) => ({ ...mapHayToDb(r), farm_id }));
+      const grainToDb = (backupData.grainMovements || []).map((m: any) => ({ ...mapGrainToDb(m), farm_id }));
+      const seedsToDb = (backupData.savedSeeds || []).map((s: any) => ({ ...mapSeedToDb(s), farm_id }));
+      const recipesToDb = (backupData.sprayRecipes || []).map((r: any) => ({ ...mapRecipeToDb(r), farm_id }));
+
+      // 2. Perform bulk upserts
+      const upsert = async (table: string, data: any[]) => {
+        if (data.length === 0) return;
+        const { error } = await supabase.from(table).upsert(data);
+        if (error) throw error;
+      };
+
+      await Promise.all([
+        upsert('fields', fieldsToDb),
+        upsert('bins', binsToDb),
+        upsert('plant_records', plantsToDb),
+        upsert('spray_records', spraysToDb),
+        upsert('harvest_records', harvestsToDb),
+        upsert('hay_harvest_records', hayToDb),
+        upsert('grain_movements', grainToDb),
+        upsert('saved_seeds', seedsToDb),
+        upsert('spray_recipes', recipesToDb)
+      ]);
+
+      // 3. Update local state
+      if (backupData.fields) setFields(backupData.fields);
+      if (backupData.bins) setBins(backupData.bins);
+      if (backupData.plantRecords) setPlantRecords(backupData.plantRecords);
+      if (backupData.sprayRecords) setSprayRecords(backupData.sprayRecords);
+      if (backupData.harvestRecords) setHarvestRecords(backupData.harvestRecords);
+      if (backupData.hayHarvestRecords) setHayHarvestRecords(backupData.hayHarvestRecords);
+      if (backupData.grainMovements) setGrainMovements(backupData.grainMovements);
+      if (backupData.savedSeeds) setSavedSeeds(backupData.savedSeeds);
+      if (backupData.sprayRecipes) setSprayRecipes(backupData.sprayRecipes);
+      if (backupData.activeSeason) {
+        setActiveSeason(backupData.activeSeason);
+        setViewingSeason(backupData.activeSeason);
+      }
+
+      console.log('Restore complete!');
+    } catch (err) {
+      console.error('Restore failed:', err);
+      // alert('Restore failed. Please check console.');
+    } finally {
+      setLoading(false);
+    }
+  }, [farm_id]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -730,6 +861,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       addSeed, deleteSeed, addSprayRecipe, updateSprayRecipe, deleteSprayRecipe,
       signOut,
       farm_id,
+      restoreFromBackup,
     }}>
       {children}
     </FarmContext.Provider>

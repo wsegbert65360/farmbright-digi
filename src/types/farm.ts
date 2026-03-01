@@ -11,6 +11,7 @@ export interface Field {
   irrigationPractice?: 'Irrigated' | 'Non-Irrigated';
   intendedUse?: string; // e.g. Grain, Forage, Seed
   farm_id?: string;
+  boundary?: any;
   deleted_at?: string;
 }
 
