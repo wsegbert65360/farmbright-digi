@@ -99,6 +99,8 @@ export default function SeasonRolloverModal() {
                             </div>
                             <div className="relative">
                                 <input
+                                    id="restoreFile"
+                                    name="restoreFile"
                                     type="file"
                                     accept=".json"
                                     onChange={handleRestore}

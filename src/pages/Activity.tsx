@@ -174,6 +174,8 @@ export default function Activity() {
 
         {/* Search */}
         <input
+          id="activitySearch"
+          name="activitySearch"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search records..."

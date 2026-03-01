@@ -171,8 +171,11 @@ function SeedManager() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        <Label htmlFor="seedVariety" className="sr-only">New Seed Variety</Label>
         <div className="flex gap-2">
           <Input
+            id="seedVariety"
+            name="seedVariety"
             value={newSeed}
             onChange={e => setNewSeed(e.target.value)}
             placeholder="e.g. DKC 64-35"
@@ -316,14 +319,24 @@ function RecipeForm({
   return (
     <div className="border border-spray/30 rounded-lg p-3 space-y-3 bg-spray/5">
       <div>
-        <Label className="text-muted-foreground font-mono text-xs">RECIPE NAME *</Label>
-        <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Burndown Mix" className="mt-1 bg-muted border-border text-foreground" autoFocus />
+        <Label htmlFor="recipeName" className="text-muted-foreground font-mono text-xs">RECIPE NAME *</Label>
+        <Input
+          id="recipeName"
+          name="recipeName"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. Burndown Mix"
+          className="mt-1 bg-muted border-border text-foreground"
+          autoFocus
+        />
       </div>
       <Label className="text-muted-foreground font-mono text-xs">PRODUCTS</Label>
       {products.map((p, i) => (
         <div key={i} className="flex gap-2 items-start border-b border-border/30 pb-3 last:border-0 last:pb-0">
           <div className="flex-1 space-y-2">
             <Input
+              id={`product-${i}`}
+              name={`product-${i}`}
               value={p.product}
               onChange={e => updateProduct(i, 'product', e.target.value)}
               placeholder="Product name (e.g. Roundup)"
@@ -331,15 +344,36 @@ function RecipeForm({
             />
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-1">
-                <Label className="text-[10px] font-mono text-muted-foreground uppercase">Rate</Label>
+                <Label htmlFor={`rate-${i}`} className="text-[10px] font-mono text-muted-foreground uppercase">Rate</Label>
                 <div className="flex gap-1">
-                  <Input value={p.rate} onChange={e => updateProduct(i, 'rate', e.target.value)} placeholder="22" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 flex-1" />
-                  <Input value={p.rateUnit} onChange={e => updateProduct(i, 'rateUnit', e.target.value)} placeholder="oz/ac" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 w-14" />
+                  <Input
+                    id={`rate-${i}`}
+                    name={`rate-${i}`}
+                    value={p.rate}
+                    onChange={e => updateProduct(i, 'rate', e.target.value)}
+                    placeholder="22"
+                    className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 flex-1"
+                  />
+                  <Input
+                    id={`unit-${i}`}
+                    name={`unit-${i}`}
+                    value={p.rateUnit}
+                    onChange={e => updateProduct(i, 'rateUnit', e.target.value)}
+                    placeholder="oz/ac"
+                    className="mt-0.5 bg-muted border-border text-foreground text-xs h-8 px-2 w-14"
+                  />
                 </div>
               </div>
               <div className="col-span-2">
-                <Label className="text-[10px] font-mono text-muted-foreground uppercase">EPA Reg #</Label>
-                <Input value={p.epaRegNumber} onChange={e => updateProduct(i, 'epaRegNumber', e.target.value)} placeholder="e.g. 524-549" className="mt-0.5 bg-muted border-border text-foreground text-xs h-8" />
+                <Label htmlFor={`epa-${i}`} className="text-[10px] font-mono text-muted-foreground uppercase">EPA Reg #</Label>
+                <Input
+                  id={`epa-${i}`}
+                  name={`epa-${i}`}
+                  value={p.epaRegNumber}
+                  onChange={e => updateProduct(i, 'epaRegNumber', e.target.value)}
+                  placeholder="e.g. 524-549"
+                  className="mt-0.5 bg-muted border-border text-foreground text-xs h-8"
+                />
               </div>
             </div>
           </div>
@@ -354,20 +388,41 @@ function RecipeForm({
         <Plus size={14} className="mr-1" /> Add Herbicide to Mix
       </Button>
       <div className="border-t border-border/50 pt-3 space-y-2">
-        <Label className="text-muted-foreground font-mono text-xs">DEFAULT AUDIT INFO</Label>
+        <h4 className="text-muted-foreground font-mono text-xs font-bold">DEFAULT AUDIT INFO</h4>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-muted-foreground font-mono text-[10px]">APPLICATOR</Label>
-            <Input value={applicatorName} onChange={e => setApplicatorName(e.target.value)} placeholder="Name" className="mt-0.5 bg-muted border-border text-foreground text-sm" />
+            <Label htmlFor="applicator" className="text-muted-foreground font-mono text-[10px]">APPLICATOR</Label>
+            <Input
+              id="applicator"
+              name="applicator"
+              value={applicatorName}
+              onChange={e => setApplicatorName(e.target.value)}
+              placeholder="Name"
+              className="mt-0.5 bg-muted border-border text-foreground text-sm"
+            />
           </div>
           <div>
-            <Label className="text-muted-foreground font-mono text-[10px]">LICENSE #</Label>
-            <Input value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} placeholder="e.g. IA-12345" className="mt-0.5 bg-muted border-border text-foreground text-sm" />
+            <Label htmlFor="license" className="text-muted-foreground font-mono text-[10px]">LICENSE #</Label>
+            <Input
+              id="license"
+              name="license"
+              value={licenseNumber}
+              onChange={e => setLicenseNumber(e.target.value)}
+              placeholder="e.g. IA-12345"
+              className="mt-0.5 bg-muted border-border text-foreground text-sm"
+            />
           </div>
         </div>
         <div>
-          <Label className="text-muted-foreground font-mono text-[10px]">GENERAL TARGET PEST</Label>
-          <Input value={targetPest} onChange={e => setTargetPest(e.target.value)} placeholder="e.g. Broadleaf weeds" className="mt-0.5 bg-muted border-border text-foreground text-sm" />
+          <Label htmlFor="target" className="text-muted-foreground font-mono text-[10px]">GENERAL TARGET PEST</Label>
+          <Input
+            id="target"
+            name="target"
+            value={targetPest}
+            onChange={e => setTargetPest(e.target.value)}
+            placeholder="e.g. Broadleaf weeds"
+            className="mt-0.5 bg-muted border-border text-foreground text-sm"
+          />
         </div>
       </div>
       <div className="flex gap-2">

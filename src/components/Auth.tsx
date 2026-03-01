@@ -50,8 +50,10 @@ export function Auth() {
                 <form onSubmit={handleAuth}>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Email</label>
+                            <label htmlFor="authEmail" className="text-sm font-medium">Email</label>
                             <Input
+                                id="authEmail"
+                                name="email"
                                 type="email"
                                 placeholder="farm@example.com"
                                 value={email}
@@ -60,8 +62,10 @@ export function Auth() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Password</label>
+                            <label htmlFor="authPassword" className="text-sm font-medium">Password</label>
                             <Input
+                                id="authPassword"
+                                name="password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

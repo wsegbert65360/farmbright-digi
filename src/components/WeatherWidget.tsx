@@ -103,6 +103,8 @@ export default function WeatherBar() {
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <MapPin size={16} className="text-muted-foreground shrink-0" />
         <input
+          id="weatherZip"
+          name="weatherZip"
           value={inputZip}
           onChange={e => setInputZip(e.target.value)}
           placeholder="Enter zip code..."
