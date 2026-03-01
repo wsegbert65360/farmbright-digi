@@ -172,7 +172,7 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
           <div className="space-y-3">
             {sprayRecipes.length > 0 && (
               <div>
-                <Label className="text-muted-foreground font-mono text-xs">SELECT RECIPE</Label>
+                <Label htmlFor="recipeSelect" className="text-muted-foreground font-mono text-xs">SELECT RECIPE</Label>
                 <Select value={selectedRecipeId} onValueChange={handleRecipeSelect}>
                   <SelectTrigger className="mt-1 bg-muted border-border text-foreground">
                     <SelectValue placeholder="Recipe (optional)" />
@@ -204,8 +204,10 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="col-span-1">
-                        <Label className="text-[9px] font-mono text-muted-foreground uppercase">Trade Name</Label>
+                        <Label htmlFor={`productName-${i}`} className="text-[9px] font-mono text-muted-foreground uppercase">Trade Name</Label>
                         <Input
+                          id={`productName-${i}`}
+                          name={`productName-${i}`}
                           value={p.product}
                           onChange={e => updateProduct(i, 'product', e.target.value)}
                           placeholder="Roundup"
@@ -213,8 +215,10 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                         />
                       </div>
                       <div className="col-span-1">
-                        <Label className="text-[9px] font-mono text-muted-foreground uppercase">EPA Reg #</Label>
+                        <Label htmlFor={`epaReg-${i}`} className="text-[9px] font-mono text-muted-foreground uppercase">EPA Reg #</Label>
                         <Input
+                          id={`epaReg-${i}`}
+                          name={`epaReg-${i}`}
                           value={p.epaRegNumber}
                           onChange={e => updateProduct(i, 'epaRegNumber', e.target.value)}
                           placeholder="524-549"
@@ -224,9 +228,9 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-[9px] font-mono text-muted-foreground uppercase">App Rate</Label>
+                        <Label htmlFor={`appRate-${i}`} className="text-[9px] font-mono text-muted-foreground uppercase">App Rate</Label>
                         <div className="flex gap-1">
-                          <Input value={p.rate} onChange={e => updateProduct(i, 'rate', e.target.value)} placeholder="22" className="mt-0.5 bg-background border-border text-foreground text-xs h-7 px-1 flex-1" />
+                          <Input id={`appRate-${i}`} name={`appRate-${i}`} value={p.rate} onChange={e => updateProduct(i, 'rate', e.target.value)} placeholder="22" className="mt-0.5 bg-background border-border text-foreground text-xs h-7 px-1 flex-1" />
                           <Input value={p.rateUnit} onChange={e => updateProduct(i, 'rateUnit', e.target.value)} placeholder="oz/ac" className="mt-0.5 bg-background border-border text-foreground text-xs h-7 px-1 w-12" />
                         </div>
                       </div>
@@ -241,8 +245,8 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
             </div>
 
             <div>
-              <Label className="text-muted-foreground font-mono text-xs font-bold">APPLICATION DATE *</Label>
-              <Input type="date" value={sprayDate} onChange={e => setSprayDate(e.target.value)} className="mt-1 bg-muted border-border text-foreground" />
+              <Label htmlFor="sprayDate" className="text-muted-foreground font-mono text-xs font-bold">APPLICATION DATE *</Label>
+              <Input id="sprayDate" name="sprayDate" type="date" value={sprayDate} onChange={e => setSprayDate(e.target.value)} className="mt-1 bg-muted border-border text-foreground" />
             </div>
           </div>
 
@@ -259,8 +263,8 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                     <Clock size={12} /> Timing
                   </div>
                   <div>
-                    <Label className="text-[10px] font-mono text-muted-foreground">START TIME *</Label>
-                    <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                    <Label htmlFor="startTime" className="text-[10px] font-mono text-muted-foreground">START TIME *</Label>
+                    <Input id="startTime" name="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
                   </div>
                 </div>
 
@@ -271,12 +275,12 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-1">
-                      <Label className="text-[10px] font-mono text-muted-foreground">SITE DESCRIPTION / ADDR</Label>
-                      <Input value={siteAddress} onChange={e => setSiteAddress(e.target.value)} placeholder="Field name or addr" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="siteAddress" className="text-[10px] font-mono text-muted-foreground">SITE DESCRIPTION / ADDR</Label>
+                      <Input id="siteAddress" name="siteAddress" value={siteAddress} onChange={e => setSiteAddress(e.target.value)} placeholder="Field name or addr" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-mono text-muted-foreground">TREATED AREA SIZE</Label>
-                      <Input value={treatedAreaSize} onChange={e => setTreatedAreaSize(e.target.value)} placeholder="e.g. 80 ac" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="treatedArea" className="text-[10px] font-mono text-muted-foreground">TREATED AREA SIZE</Label>
+                      <Input id="treatedArea" name="treatedArea" value={treatedAreaSize} onChange={e => setTreatedAreaSize(e.target.value)} placeholder="e.g. 80 ac" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                   </div>
                 </div>
@@ -287,26 +291,26 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <Label className="text-[10px] font-mono text-muted-foreground uppercase tracking-tight">TOTAL PRODUCT APPLIED (ACROSS ALL HERBICIDES)</Label>
-                      <Input value={totalAmountApplied} onChange={e => setTotalAmountApplied(e.target.value)} placeholder="Auto-calculated sum" className="mt-0.5 bg-muted border-border text-foreground h-9 font-bold" />
+                      <Label htmlFor="totalAmount" className="text-[10px] font-mono text-muted-foreground uppercase tracking-tight">TOTAL PRODUCT APPLIED (ACROSS ALL HERBICIDES)</Label>
+                      <Input id="totalAmount" name="totalAmount" value={totalAmountApplied} onChange={e => setTotalAmountApplied(e.target.value)} placeholder="Auto-calculated sum" className="mt-0.5 bg-muted border-border text-foreground h-9 font-bold" />
                     </div>
                   </div>
 
                   {/* MDA Mandatory Mixture Fields */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-[10px] font-mono text-muted-foreground uppercase">Mixture Rate</Label>
-                      <Input value={mixtureRate} onChange={e => setMixtureRate(e.target.value)} placeholder="e.g. 15 gal/ac" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="mixtureRate" className="text-[10px] font-mono text-muted-foreground uppercase">Mixture Rate</Label>
+                      <Input id="mixtureRate" name="mixtureRate" value={mixtureRate} onChange={e => setMixtureRate(e.target.value)} placeholder="e.g. 15 gal/ac" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-mono text-muted-foreground uppercase">Total Mixture Vol</Label>
-                      <Input value={totalMixtureVolume} onChange={e => setTotalMixtureVolume(e.target.value)} placeholder="e.g. 1200 gal" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="totalVolume" className="text-[10px] font-mono text-muted-foreground uppercase">Total Mixture Vol</Label>
+                      <Input id="totalVolume" name="totalVolume" value={totalMixtureVolume} onChange={e => setTotalMixtureVolume(e.target.value)} placeholder="e.g. 1200 gal" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-[10px] font-mono text-muted-foreground">TARGET PEST(S)</Label>
-                    <Input value={targetPest} onChange={e => setTargetPest(e.target.value)} placeholder="e.g. Pigweed" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                    <Label htmlFor="targetPest" className="text-[10px] font-mono text-muted-foreground">TARGET PEST(S)</Label>
+                    <Input id="targetPest" name="targetPest" value={targetPest} onChange={e => setTargetPest(e.target.value)} placeholder="e.g. Pigweed" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                   </div>
                   <div className="flex items-center space-x-2 py-2">
                     <Switch id="premixed" checked={isPremixed} onCheckedChange={setIsPremixed} />
@@ -321,21 +325,21 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-[10px] font-mono text-muted-foreground">CERT. APPLICATOR *</Label>
-                      <Input value={applicatorName} onChange={e => setApplicatorName(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="applicator" className="text-[10px] font-mono text-muted-foreground">CERT. APPLICATOR *</Label>
+                      <Input id="applicator" name="applicator" value={applicatorName} onChange={e => setApplicatorName(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-mono text-muted-foreground">LICENSE # *</Label>
-                      <Input value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                      <Label htmlFor="license" className="text-[10px] font-mono text-muted-foreground">LICENSE # *</Label>
+                      <Input id="license" name="license" value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} className="mt-0.5 bg-muted border-border text-foreground h-9" />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-[10px] font-mono text-muted-foreground">INVOLVED TECHNICIANS / NON-CERTIFIED</Label>
-                    <Input value={involvedTechnicians} onChange={e => setInvolvedTechnicians(e.target.value)} placeholder="Name and license of others involved" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                    <Label htmlFor="technicians" className="text-[10px] font-mono text-muted-foreground">INVOLVED TECHNICIANS / NON-CERTIFIED</Label>
+                    <Input id="technicians" name="technicians" value={involvedTechnicians} onChange={e => setInvolvedTechnicians(e.target.value)} placeholder="Name and license of others involved" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] font-mono text-muted-foreground uppercase">Equipment ID (Machine) *</Label>
-                    <Input value={equipmentId} onChange={e => setEquipmentId(e.target.value)} placeholder="e.g. Miller Nitro" className="mt-0.5 bg-muted border-border text-foreground h-9" />
+                    <Label htmlFor="equipmentId" className="text-[10px] font-mono text-muted-foreground uppercase">Equipment ID (Machine) *</Label>
+                    <Input id="equipmentId" name="equipmentId" value={equipmentId} onChange={e => setEquipmentId(e.target.value)} placeholder="e.g. Miller Nitro" className="mt-0.5 bg-muted border-border text-foreground h-9" />
                   </div>
                 </div>
               </AccordionContent>

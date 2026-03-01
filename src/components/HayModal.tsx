@@ -84,10 +84,12 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
                 <div className="space-y-4 py-2">
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <Label className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
+                            <Label htmlFor="baleCount" className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
                                 <Hash size={12} /> Bale Count *
                             </Label>
                             <Input
+                                id="baleCount"
+                                name="baleCount"
                                 type="number"
                                 value={baleCount}
                                 onChange={e => setBaleCount(e.target.value)}
@@ -97,10 +99,12 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
                             />
                         </div>
                         <div>
-                            <Label className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
+                            <Label htmlFor="cuttingNumber" className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
                                 <Layers size={12} /> Cutting #
                             </Label>
                             <Input
+                                id="cuttingNumber"
+                                name="cuttingNumber"
                                 type="number"
                                 value={cuttingNumber}
                                 onChange={e => setCuttingNumber(e.target.value)}
@@ -111,7 +115,7 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
                     </div>
 
                     <div>
-                        <Label className="text-muted-foreground font-mono text-[10px] uppercase">Bale Type</Label>
+                        <Label htmlFor="baleType" className="text-muted-foreground font-mono text-[10px] uppercase">Bale Type</Label>
                         <Select value={baleType} onValueChange={(v: 'Round' | 'Square') => setBaleType(v)}>
                             <SelectTrigger className="mt-1 bg-muted border-border text-foreground">
                                 <SelectValue />
@@ -124,8 +128,10 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
                     </div>
 
                     <div>
-                        <Label className="text-muted-foreground font-mono text-[10px] uppercase">Harvest Date</Label>
+                        <Label htmlFor="hayDate" className="text-muted-foreground font-mono text-[10px] uppercase">Harvest Date</Label>
                         <Input
+                            id="hayDate"
+                            name="hayDate"
                             type="date"
                             value={date}
                             onChange={e => setDate(e.target.value)}
@@ -135,10 +141,12 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
 
                     <div className="grid grid-cols-2 gap-3 border-t border-border/20 pt-3">
                         <div>
-                            <Label className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
+                            <Label htmlFor="hayTemp" className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
                                 <Thermometer size={12} /> Temp (°F)
                             </Label>
                             <Input
+                                id="hayTemp"
+                                name="hayTemp"
                                 type="number"
                                 value={temp}
                                 onChange={e => setTemp(e.target.value)}
@@ -147,10 +155,12 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
                             />
                         </div>
                         <div>
-                            <Label className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
+                            <Label htmlFor="hayConditions" className="text-muted-foreground font-mono text-[10px] flex items-center gap-1.5 uppercase">
                                 <Cloud size={12} /> Conditions
                             </Label>
                             <Input
+                                id="hayConditions"
+                                name="hayConditions"
                                 value={conditions}
                                 onChange={e => setConditions(e.target.value)}
                                 placeholder="Dry/Sunny"

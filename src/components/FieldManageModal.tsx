@@ -212,8 +212,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-muted-foreground font-mono text-xs">FIELD NAME</Label>
+              <Label htmlFor="fieldName" className="text-muted-foreground font-mono text-xs">FIELD NAME</Label>
               <Input
+                id="fieldName"
+                name="fieldName"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. North 80"
@@ -222,10 +224,12 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs flex items-center gap-1">
+              <Label htmlFor="acreage" className="text-muted-foreground font-mono text-xs flex items-center gap-1">
                 ACREAGE {points.length >= 3 && <span className="text-[10px] text-primary">(AUTO)</span>}
               </Label>
               <Input
+                id="acreage"
+                name="acreage"
                 type="number"
                 value={acreage}
                 onChange={e => setAcreage(e.target.value)}
@@ -234,8 +238,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">FSA FIELD #</Label>
+              <Label htmlFor="fsaField" className="text-muted-foreground font-mono text-xs">FSA FIELD #</Label>
               <Input
+                id="fsaField"
+                name="fsaField"
                 value={fsaField}
                 onChange={e => setFsaField(e.target.value)}
                 placeholder="1"
@@ -246,10 +252,12 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-muted-foreground font-mono text-xs flex items-center gap-1">
+              <Label htmlFor="latitude" className="text-muted-foreground font-mono text-xs flex items-center gap-1">
                 <MapPin size={10} /> LATITUDE
               </Label>
               <Input
+                id="latitude"
+                name="latitude"
                 type="number"
                 step="0.000001"
                 value={lat}
@@ -258,10 +266,12 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs flex items-center gap-1">
+              <Label htmlFor="longitude" className="text-muted-foreground font-mono text-xs flex items-center gap-1">
                 <MapPin size={10} /> LONGITUDE
               </Label>
               <Input
+                id="longitude"
+                name="longitude"
                 type="number"
                 step="0.000001"
                 value={lng}
@@ -278,8 +288,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-muted-foreground font-mono text-xs uppercase">FSA Farm #</Label>
+                <Label htmlFor="fsaFarm" className="text-muted-foreground font-mono text-xs uppercase">FSA Farm #</Label>
                 <Input
+                  id="fsaFarm"
+                  name="fsaFarm"
                   value={fsaFarm}
                   onChange={e => setFsaFarm(e.target.value)}
                   placeholder="Enter Farm #"
@@ -287,8 +299,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
                 />
               </div>
               <div>
-                <Label className="text-muted-foreground font-mono text-xs uppercase">Tract #</Label>
+                <Label htmlFor="fsaTract" className="text-muted-foreground font-mono text-xs uppercase">Tract #</Label>
                 <Input
+                  id="fsaTract"
+                  name="fsaTract"
                   value={fsaTract}
                   onChange={e => setFsaTract(e.target.value)}
                   placeholder="Enter Tract #"
@@ -300,8 +314,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/20">
             <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase">Producer Share %</Label>
+              <Label htmlFor="fieldProducerShare" className="text-muted-foreground font-mono text-xs uppercase">Producer Share %</Label>
               <Input
+                id="fieldProducerShare"
+                name="fieldProducerShare"
                 type="number"
                 value={producerShare}
                 onChange={e => setProducerShare(e.target.value)}
@@ -309,8 +325,10 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs uppercase">Intended Use</Label>
+              <Label htmlFor="fieldIntendedUse" className="text-muted-foreground font-mono text-xs uppercase">Intended Use</Label>
               <Input
+                id="fieldIntendedUse"
+                name="fieldIntendedUse"
                 value={intendedUse}
                 onChange={e => setIntendedUse(e.target.value)}
                 className="mt-1 bg-muted border-border text-foreground"

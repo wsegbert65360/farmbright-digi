@@ -49,8 +49,10 @@ export default function BinManageModal({ open, onClose, editBin }: BinManageModa
                 </DialogHeader>
                 <div className="space-y-4 py-2">
                     <div>
-                        <Label className="text-muted-foreground font-mono text-xs">BIN NAME</Label>
+                        <Label htmlFor="binName" className="text-muted-foreground font-mono text-xs">BIN NAME</Label>
                         <Input
+                            id="binName"
+                            name="binName"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             placeholder="e.g. Bin #4"
@@ -59,8 +61,10 @@ export default function BinManageModal({ open, onClose, editBin }: BinManageModa
                         />
                     </div>
                     <div>
-                        <Label className="text-muted-foreground font-mono text-xs">CAPACITY (BUSHELS)</Label>
+                        <Label htmlFor="binCapacity" className="text-muted-foreground font-mono text-xs">CAPACITY (BUSHELS)</Label>
                         <Input
+                            id="binCapacity"
+                            name="binCapacity"
                             type="number"
                             value={capacity}
                             onChange={e => setCapacity(e.target.value)}

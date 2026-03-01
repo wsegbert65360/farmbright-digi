@@ -70,7 +70,7 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label className="text-muted-foreground font-mono text-xs">SEED VARIETY *</Label>
+            <Label htmlFor="seedVariety" className="text-muted-foreground font-mono text-xs">SEED VARIETY *</Label>
             {savedSeeds.length > 0 ? (
               <Select value={seedVariety} onValueChange={setSeedVariety}>
                 <SelectTrigger className="mt-1 bg-muted border-border text-foreground">
@@ -84,6 +84,8 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
               </Select>
             ) : (
               <Input
+                id="seedVariety"
+                name="seedVariety"
                 value={seedVariety}
                 onChange={e => setSeedVariety(e.target.value)}
                 placeholder="e.g. DKC 64-35 (add seeds in Setup)"
@@ -93,8 +95,10 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
             )}
           </div>
           <div>
-            <Label className="text-muted-foreground font-mono text-xs">CROP TYPE</Label>
+            <Label htmlFor="cropType" className="text-muted-foreground font-mono text-xs">CROP TYPE</Label>
             <Input
+              id="cropType"
+              name="cropType"
               value={crop}
               onChange={e => setCrop(e.target.value)}
               placeholder="e.g. Corn, Soybeans"
@@ -102,8 +106,10 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
             />
           </div>
           <div>
-            <Label className="text-muted-foreground font-mono text-xs">PLANT DATE</Label>
+            <Label htmlFor="plantDate" className="text-muted-foreground font-mono text-xs">PLANT DATE</Label>
             <Input
+              id="plantDate"
+              name="plantDate"
               type="date"
               value={plantDate}
               onChange={e => setPlantDate(e.target.value)}
@@ -112,8 +118,10 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">INTENDED USE</Label>
+              <Label htmlFor="intendedUse" className="text-muted-foreground font-mono text-xs">INTENDED USE</Label>
               <Input
+                id="intendedUse"
+                name="intendedUse"
                 value={intendedUse}
                 onChange={e => setIntendedUse(e.target.value)}
                 placeholder="e.g. Grain"
@@ -142,8 +150,10 @@ export default function PlantModal({ field, open, onClose, initialData }: PlantM
               </Select>
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">PRODUCER SHARE % *</Label>
+              <Label htmlFor="producerShare" className="text-muted-foreground font-mono text-xs">PRODUCER SHARE % *</Label>
               <Input
+                id="producerShare"
+                name="producerShare"
                 type="number"
                 step="1"
                 min="0"

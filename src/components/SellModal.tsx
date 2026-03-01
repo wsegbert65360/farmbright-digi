@@ -63,10 +63,12 @@ export default function SellModal({ bin, open, onClose }: SellModalProps) {
 
                     <div className="space-y-3">
                         <div>
-                            <Label className="text-muted-foreground font-mono text-xs font-bold flex items-center gap-1.5">
+                            <Label htmlFor="sellBushels" className="text-muted-foreground font-mono text-xs font-bold flex items-center gap-1.5">
                                 <Hash size={12} /> BUSHELS SOLD *
                             </Label>
                             <Input
+                                id="sellBushels"
+                                name="sellBushels"
                                 type="number"
                                 value={bushels}
                                 onChange={e => setBushels(e.target.value)}
@@ -81,10 +83,12 @@ export default function SellModal({ bin, open, onClose }: SellModalProps) {
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label className="text-muted-foreground font-mono text-xs font-bold">PRICE / BU</Label>
+                                <Label htmlFor="sellPrice" className="text-muted-foreground font-mono text-xs font-bold">PRICE / BU</Label>
                                 <div className="relative mt-1">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                                     <Input
+                                        id="sellPrice"
+                                        name="sellPrice"
                                         type="number"
                                         step="0.01"
                                         value={price}
@@ -95,8 +99,10 @@ export default function SellModal({ bin, open, onClose }: SellModalProps) {
                                 </div>
                             </div>
                             <div>
-                                <Label className="text-muted-foreground font-mono text-xs font-bold">DATE</Label>
+                                <Label htmlFor="sellDate" className="text-muted-foreground font-mono text-xs font-bold">DATE</Label>
                                 <Input
+                                    id="sellDate"
+                                    name="sellDate"
                                     type="date"
                                     value={date}
                                     onChange={e => setDate(e.target.value)}
@@ -106,10 +112,12 @@ export default function SellModal({ bin, open, onClose }: SellModalProps) {
                         </div>
 
                         <div>
-                            <Label className="text-muted-foreground font-mono text-xs font-bold flex items-center gap-1.5">
+                            <Label htmlFor="buyer" className="text-muted-foreground font-mono text-xs font-bold flex items-center gap-1.5">
                                 <Truck size={12} /> DESTINATION / BUYER
                             </Label>
                             <Input
+                                id="buyer"
+                                name="buyer"
                                 value={destination}
                                 onChange={e => setDestination(e.target.value)}
                                 placeholder="e.g. ADM Lincoln"

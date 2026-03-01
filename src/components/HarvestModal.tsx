@@ -159,8 +159,10 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
               </div>
             )}
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">CROP TYPE</Label>
+              <Label htmlFor="harvestCrop" className="text-muted-foreground font-mono text-xs">CROP TYPE</Label>
               <Input
+                id="harvestCrop"
+                name="harvestCrop"
                 value={crop}
                 onChange={e => setCrop(e.target.value)}
                 placeholder="e.g. Corn, Soybeans"
@@ -168,8 +170,10 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">HARVEST DATE</Label>
+              <Label htmlFor="harvestDate" className="text-muted-foreground font-mono text-xs">HARVEST DATE</Label>
               <Input
+                id="harvestDate"
+                name="harvestDate"
                 type="date"
                 value={harvestDate}
                 onChange={e => setHarvestDate(e.target.value)}
@@ -177,8 +181,10 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
               />
             </div>
             <div>
-              <Label className="text-muted-foreground font-mono text-xs">BUSHELS</Label>
+              <Label htmlFor="bushels" className="text-muted-foreground font-mono text-xs">BUSHELS</Label>
               <Input
+                id="bushels"
+                name="bushels"
                 type="number"
                 value={bushels}
                 onChange={e => setBushels(e.target.value)}
@@ -188,8 +194,10 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-muted-foreground font-mono text-xs">MOISTURE %</Label>
+                <Label htmlFor="moisture" className="text-muted-foreground font-mono text-xs">MOISTURE %</Label>
                 <Input
+                  id="moisture"
+                  name="moisture"
                   type="number"
                   value={moisture}
                   onChange={e => setMoisture(e.target.value)}
@@ -198,8 +206,10 @@ export default function HarvestModal({ field, open, onClose, initialData }: Harv
                 />
               </div>
               <div>
-                <Label className="text-muted-foreground font-mono text-xs">LANDLORD %</Label>
+                <Label htmlFor="landlordSplit" className="text-muted-foreground font-mono text-xs">LANDLORD %</Label>
                 <Input
+                  id="landlordSplit"
+                  name="landlordSplit"
                   type="number"
                   value={landlordSplit}
                   onChange={e => setLandlordSplit(e.target.value)}
