@@ -58,7 +58,7 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-95 py-3"
           >
             <Wheat size={20} strokeWidth={2} />
-            <span className="font-mono text-[10px] uppercase font-bold">Grain</span>
+            <span className="font-mono text-[10px] uppercase font-bold">Harvest</span>
           </button>
           <button
             onClick={() => setModal('hay')}
