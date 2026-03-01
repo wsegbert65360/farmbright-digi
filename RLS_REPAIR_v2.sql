@@ -61,5 +61,12 @@ CREATE POLICY "Tenant Isolation" ON public.spray_recipes FOR ALL USING (
   farm_id = (COALESCE(auth.jwt() -> 'app_metadata' ->> 'farm_id', auth.jwt() -> 'user_metadata' ->> 'farm_id'))::uuid
 );
 
+-- farms Isolation: A user can see/edit the farm their profile is linked to
+ALTER TABLE public.farms ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Tenant Isolation" ON public.farms;
+CREATE POLICY "Tenant Isolation" ON public.farms FOR ALL USING (
+  id = (COALESCE(auth.jwt() -> 'app_metadata' ->> 'farm_id', auth.jwt() -> 'user_metadata' ->> 'farm_id'))::uuid
+);
+
 -- Profiles Isolation: A user can only see/edit their own profile record
 CREATE POLICY "Profile Isolation" ON public.profiles FOR ALL USING (auth.uid() = id);
