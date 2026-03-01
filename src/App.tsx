@@ -12,6 +12,7 @@ import Activity from "./pages/Activity";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -33,14 +34,13 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
         <Route path="/logistics" element={<Logistics />} />
-        <Route path="/activity" element={<Activity />} />
+        <Route path="/activity" element={<ErrorBoundary><Activity /></ErrorBoundary>} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <SeasonRolloverModal />
       <SeasonRolloverModal />
     </BrowserRouter>
   );
