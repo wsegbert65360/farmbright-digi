@@ -170,7 +170,7 @@ export default function Reports() {
                         <tr key={r.id} className="border-b border-border/50">
                           <td className="py-2 px-2 font-mono text-xs text-foreground">{fmtDate(r.plantDate) || fmt(r.timestamp)}</td>
                           <td className="py-2 px-2 text-foreground font-semibold text-xs">{r.fieldName}</td>
-                          <td className="py-2 px-2 font-mono text-xs text-plant">{r.crop || '—'}</td>
+                          <td className="py-2 px-2 font-mono text-xs text-harvest">{r.crop || '—'}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground">{r.seedVariety}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{r.acreage}</td>
                           <td className="py-2 px-2 font-mono text-xs text-foreground">
