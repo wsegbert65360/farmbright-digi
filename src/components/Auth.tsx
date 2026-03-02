@@ -31,8 +31,9 @@ export function Auth() {
                 if (error) throw error;
                 toast.success('Logged in successfully!');
             }
-        } catch (error: any) {
-            toast.error(error.message || 'Authentication error');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Authentication error';
+            toast.error(message);
         } finally {
             setLoading(false);
         }

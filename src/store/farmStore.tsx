@@ -114,14 +114,20 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   // Initialize Supabase session & handle Auth Changes
   useEffect(() => {
     const initSession = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
 
-      if (initialSession?.user) {
-        const jwtFarmId = initialSession.user.app_metadata?.farm_id || initialSession.user.user_metadata?.farm_id;
-        if (jwtFarmId) setFarmId(jwtFarmId);
+        if (initialSession?.user) {
+          const jwtFarmId = initialSession.user.app_metadata?.farm_id || initialSession.user.user_metadata?.farm_id;
+          if (jwtFarmId) setFarmId(jwtFarmId);
+        }
+      } catch (err) {
+        console.error('Session initialization failed:', err);
+        toast.error('Could not connect to authentication service. Check your connection.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initSession();
@@ -160,7 +166,11 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             const { data: nf } = await supabase.from('farms').insert([{ name: 'My Farm' }]).select().single();
             if (nf) {
               currentFarmId = nf.id;
-              await supabase.from('profiles').update({ farm_id: currentFarmId }).eq('id', session.user.id);
+              const { error: updateError } = await supabase.from('profiles').update({ farm_id: currentFarmId }).eq('id', session.user.id);
+              if (updateError) {
+                console.error('Error updating profile with farm_id:', updateError);
+                toast.error('Failed to link farm to profile');
+              }
             }
           }
 
@@ -194,15 +204,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           const query = (table: string) => supabase.from(table).select('*').eq('farm_id', farm_id).is('deleted_at', null);
 
           const [
-            { data: fieldsData },
-            { data: binsData },
-            { data: plantData },
-            { data: sprayData },
-            { data: harvestData },
-            { data: hayData },
-            { data: grainData },
-            { data: seedsData },
-            { data: recipesData }
+            { data: fieldsData, error: fieldsErr },
+            { data: binsData, error: binsErr },
+            { data: plantData, error: plantErr },
+            { data: sprayData, error: sprayErr },
+            { data: harvestData, error: harvestErr },
+            { data: hayData, error: hayErr },
+            { data: grainData, error: grainErr },
+            { data: seedsData, error: seedsErr },
+            { data: recipesData, error: recipesErr }
           ] = await Promise.all([
             query('fields'),
             query('bins'),
@@ -214,6 +224,16 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             query('saved_seeds'),
             query('spray_recipes')
           ]);
+
+          const fetchErrors = [
+            fieldsErr, binsErr, plantErr, sprayErr, harvestErr,
+            hayErr, grainErr, seedsErr, recipesErr
+          ].filter(Boolean);
+
+          if (fetchErrors.length > 0) {
+            console.error('Data fetch errors:', fetchErrors);
+            toast.error('Some data failed to load from cloud. Showing local cache.');
+          }
 
           if (fieldsData) setFields(fieldsData.map(mapFieldFromDb));
           if (binsData) setBins(binsData.map(mapBinFromDb));
@@ -571,7 +591,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(r.timestamp).toISOString()
     });
 
-    if (error) console.error('Error updating grain movement:', error);
+    if (error) {
+      console.error('Error updating grain movement:', error);
+      toast.error('Failed to update grain movement');
+    } else {
+      toast.success('Grain movement updated');
+    }
+
   }, [farm_id]);
 
   const deleteGrainMovements = useCallback(async (ids: string[]) => {
@@ -597,7 +623,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting plant records:', error);
+    if (error) {
+      console.error('Error deleting plant records:', error);
+      toast.error('Failed to delete records');
+    } else {
+      toast.success('Records deleted');
+    }
+
   }, [farm_id]);
 
   const deleteSprayRecords = useCallback(async (ids: string[]) => {
@@ -607,7 +639,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting spray records:', error);
+    if (error) {
+      console.error('Error deleting spray records:', error);
+      toast.error('Failed to delete records');
+    } else {
+      toast.success('Records deleted');
+    }
+
   }, [farm_id]);
 
   const deleteHarvestRecords = useCallback(async (ids: string[]) => {
@@ -617,7 +655,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting harvest records:', error);
+    if (error) {
+      console.error('Error deleting harvest records:', error);
+      toast.error('Failed to delete records');
+    } else {
+      toast.success('Records deleted');
+    }
+
   }, [farm_id]);
 
   const deleteHayHarvestRecords = useCallback(async (ids: string[]) => {
@@ -627,7 +671,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting hay harvest records:', error);
+    if (error) {
+      console.error('Error deleting hay harvest records:', error);
+      toast.error('Failed to delete records');
+    } else {
+      toast.success('Records deleted');
+    }
+
   }, [farm_id]);
 
   const getBinTotal = useCallback((binId: string) => {
@@ -660,7 +710,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Supabase error adding field:', error);
+      setFields(prev => prev.filter(f => f.id !== id));
+      toast.error('Failed to save field');
     } else {
+      toast.success('Field created!');
     }
   }, [farm_id]);
 
@@ -688,7 +741,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Supabase error updating field:', error);
+      toast.error('Failed to update field');
     } else {
+      toast.success('Field updated');
     }
   }, [farm_id]);
 
@@ -700,7 +755,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('farm_id', farm_id); // Redundant check for RLS safety
-    if (error) console.error('Error deleting field:', error);
+    if (error) {
+      console.error('Error deleting field:', error);
+      toast.error('Failed to delete field');
+    } else {
+      toast.success('Field deleted');
+    }
+
   }, [farm_id]);
 
   const addBin = useCallback(async (b: Omit<Bin, 'id'>) => {
@@ -712,7 +773,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       name: b.name,
       capacity: b.capacity
     }]);
-    if (error) console.error('Error adding bin:', error);
+    if (error) {
+      console.error('Error adding bin:', error);
+      setBins(prev => prev.filter(bin => bin.id !== id));
+      toast.error('Failed to save bin');
+    } else {
+      toast.success('Bin created!');
+    }
+
   }, [farm_id]);
 
   const updateBin = useCallback(async (b: Bin) => {
@@ -724,7 +792,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       capacity: b.capacity,
       deleted_at: b.deleted_at
     });
-    if (error) console.error('Error updating bin:', error);
+    if (error) {
+      console.error('Error updating bin:', error);
+      toast.error('Failed to update bin');
+    } else {
+      toast.success('Bin updated');
+    }
+
   }, [farm_id]);
 
   const deleteBin = useCallback(async (id: string) => {
@@ -736,14 +810,27 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting bin:', error);
+    if (error) {
+      console.error('Error deleting bin:', error);
+      toast.error('Failed to delete bin');
+    } else {
+      toast.success('Bin deleted');
+    }
+
   }, [farm_id]);
 
   const addSeed = useCallback(async (name: string) => {
     const id = uid();
     setSavedSeeds(prev => [...prev, { id, name }]);
     const { error } = await supabase.from('saved_seeds').insert([{ id, farm_id, name }]);
-    if (error) console.error('Error adding seed:', error);
+    if (error) {
+      console.error('Error adding seed:', error);
+      setSavedSeeds(prev => prev.filter(s => s.id !== id));
+      toast.error('Failed to save seed');
+    } else {
+      toast.success('Seed variety added!');
+    }
+
   }, [farm_id]);
 
   const deleteSeed = useCallback(async (id: string) => {
@@ -753,7 +840,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting seed:', error);
+    if (error) {
+      console.error('Error deleting seed:', error);
+      toast.error('Failed to delete seed');
+    } else {
+      toast.success('Seed variety removed');
+    }
+
   }, [farm_id]);
 
   const addSprayRecipe = useCallback(async (r: Omit<SprayRecipe, 'id'>) => {
@@ -769,7 +862,14 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       target_pest: r.targetPest,
       epa_reg_number: r.epaRegNumber
     }]);
-    if (error) console.error('Error adding spray recipe:', error);
+    if (error) {
+      console.error('Error adding spray recipe:', error);
+      setSprayRecipes(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save recipe');
+    } else {
+      toast.success('Spray recipe created!');
+    }
+
   }, [farm_id]);
 
   const updateSprayRecipe = useCallback(async (r: SprayRecipe) => {
@@ -785,7 +885,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       epa_reg_number: r.epaRegNumber,
       deleted_at: r.deleted_at
     });
-    if (error) console.error('Error updating spray recipe:', error);
+    if (error) {
+      console.error('Error updating spray recipe:', error);
+      toast.error('Failed to update recipe');
+    } else {
+      toast.success('Recipe updated');
+    }
+
   }, [farm_id]);
 
   const deleteSprayRecipe = useCallback(async (id: string) => {
@@ -795,7 +901,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('farm_id', farm_id);
-    if (error) console.error('Error deleting spray recipe:', error);
+    if (error) {
+      console.error('Error deleting spray recipe:', error);
+      toast.error('Failed to delete recipe');
+    } else {
+      toast.success('Recipe removed');
+    }
+
   }, [farm_id]);
 
   const rolloverToNewSeason = useCallback(async (year: number) => {
@@ -866,16 +978,25 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         upsert('spray_recipes', recipesToDb)
       ]);
 
-      // 3. Update local state
-      if (backupData.fields) setFields(backupData.fields);
-      if (backupData.bins) setBins(backupData.bins);
-      if (backupData.plantRecords) setPlantRecords(backupData.plantRecords);
-      if (backupData.sprayRecords) setSprayRecords(backupData.sprayRecords);
-      if (backupData.harvestRecords) setHarvestRecords(backupData.harvestRecords);
-      if (backupData.hayHarvestRecords) setHayHarvestRecords(backupData.hayHarvestRecords);
-      if (backupData.grainMovements) setGrainMovements(backupData.grainMovements);
-      if (backupData.savedSeeds) setSavedSeeds(backupData.savedSeeds);
-      if (backupData.sprayRecipes) setSprayRecipes(backupData.sprayRecipes);
+      // 3. Update local state — always map through schema normalization
+      if (backupData.fields)
+        setFields((backupData.fields as any[]).map(mapFieldFromDb));
+      if (backupData.bins)
+        setBins((backupData.bins as any[]).map(mapBinFromDb));
+      if (backupData.plantRecords)
+        setPlantRecords((backupData.plantRecords as any[]).map(mapPlantFromDb));
+      if (backupData.sprayRecords)
+        setSprayRecords((backupData.sprayRecords as any[]).map(mapSprayFromDb));
+      if (backupData.harvestRecords)
+        setHarvestRecords((backupData.harvestRecords as any[]).map(mapHarvestFromDb));
+      if (backupData.hayHarvestRecords)
+        setHayHarvestRecords((backupData.hayHarvestRecords as any[]).map(mapHayFromDb));
+      if (backupData.grainMovements)
+        setGrainMovements((backupData.grainMovements as any[]).map(mapGrainFromDb));
+      if (backupData.savedSeeds)
+        setSavedSeeds((backupData.savedSeeds as any[]).map(mapSeedFromDb));
+      if (backupData.sprayRecipes)
+        setSprayRecipes((backupData.sprayRecipes as any[]).map(mapRecipeFromDb));
       if (backupData.activeSeason) {
         setActiveSeason(backupData.activeSeason);
         setViewingSeason(backupData.activeSeason);

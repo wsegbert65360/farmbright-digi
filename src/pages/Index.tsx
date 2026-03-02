@@ -4,7 +4,6 @@ import FieldCard from '@/components/FieldCard';
 import BottomNav from '@/components/BottomNav';
 import WeatherBar from '@/components/WeatherWidget';
 import { FieldManager } from '@/components/FieldManageModal';
-import SeasonRolloverModal from '@/components/SeasonRolloverModal';
 import { useFieldRainfall } from '@/hooks/useFieldRainfall';
 import { Tractor, Settings, History } from 'lucide-react';
 
@@ -67,7 +66,6 @@ const Index = () => {
         )}
       </main>
       <BottomNav />
-      <SeasonRolloverModal />
     </div>
   );
 };

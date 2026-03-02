@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Sprout, Droplets, Wheat, Printer, Download, History, Tractor } from 'lucide-react';
 import { generateMissouriLog, exportFsa578Data, exportHarvestData } from '@/lib/complianceReports';
+import { formatIsoDate, parseLocalDate, formatDisplayDate } from '@/utils/dates';
+import { roundTo } from '@/utils/numbers';
 
 type ReportTab = 'fsa-plant' | 'spray-audit' | 'fsa-harvest' | 'hay-summary';
 
@@ -39,8 +41,8 @@ export default function Reports() {
     ...allGrain.map(r => r.seasonYear)
   ])).filter((y): y is number => !!y).sort((a, b) => b - a);
 
-  const fmt = (ts: number) => new Date(ts).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  const fmtDate = (d?: string) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '—';
+  const fmt = (ts: number) => new Date(ts).toLocaleDateString();
+  const fmtDate = (d?: string) => d ? formatIsoDate(d) : '—';
 
   const tabs: { key: ReportTab; icon: typeof Sprout; label: string; color: string }[] = [
     { key: 'fsa-plant', icon: Sprout, label: 'FSA Plant', color: 'text-plant' },
@@ -52,8 +54,8 @@ export default function Reports() {
   const handlePrint = () => window.print();
 
   // Totals based on filtered records
-  const totalPlantAcres = plantRecords.reduce((sum, r) => sum + r.acreage, 0);
-  const totalHarvestBu = harvestRecords.reduce((sum, r) => sum + r.bushels, 0);
+  const totalPlantAcres = roundTo(plantRecords.reduce((sum, r) => sum + r.acreage, 0), 2);
+  const totalHarvestBu = roundTo(harvestRecords.reduce((sum, r) => sum + r.bushels, 0), 2);
 
   return (
     <div className="min-h-screen bg-background pb-24">

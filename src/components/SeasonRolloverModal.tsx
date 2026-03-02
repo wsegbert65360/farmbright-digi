@@ -21,7 +21,7 @@ export default function SeasonRolloverModal() {
         const handleManualOpen = () => setOpen(true);
         window.addEventListener('open-rollover', handleManualOpen);
         return () => window.removeEventListener('open-rollover', handleManualOpen);
-    }, [activeSeason, currentYear]);
+    }, [activeSeason, currentYear, setOpen]);
 
     const handleRollover = () => {
         rolloverToNewSeason(currentYear);

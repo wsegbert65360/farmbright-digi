@@ -138,6 +138,7 @@ export interface SavedSeed {
 }
 
 export interface SprayRecipeProduct {
+  id?: string;
   product: string;
   rate: string;
   rateUnit: string;

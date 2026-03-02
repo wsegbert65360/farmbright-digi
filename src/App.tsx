@@ -32,31 +32,32 @@ const AppContent = () => {
   }
 
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-        <Route path="/logistics" element={<Logistics />} />
+        <Route path="/logistics" element={<ErrorBoundary><Logistics /></ErrorBoundary>} />
         <Route path="/activity" element={<ErrorBoundary><Activity /></ErrorBoundary>} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/reports" element={<ErrorBoundary><Reports /></ErrorBoundary>} />
+        <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <SeasonRolloverModal />
-    </BrowserRouter>
+    </>
   );
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <FarmProvider>
-        <Toaster />
-        <Sonner />
-        <AppContent />
-      </FarmProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <FarmProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </FarmProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </BrowserRouter>
 );
 
 export default App;
-

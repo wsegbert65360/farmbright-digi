@@ -89,7 +89,16 @@ function AccountManager() {
 }
 
 function BackupManager() {
-  const { fields, plantRecords, sprayRecords, harvestRecords, grainMovements, savedSeeds, sprayRecipes } = useFarm();
+  const {
+    fields,
+    plantRecords,
+    sprayRecords,
+    harvestRecords,
+    hayHarvestRecords,
+    grainMovements,
+    savedSeeds,
+    sprayRecipes
+  } = useFarm();
   const [backingUp, setBackingUp] = useState(false);
 
   const handleBackup = async () => {
@@ -101,6 +110,7 @@ function BackupManager() {
         plantRecords,
         sprayRecords,
         harvestRecords,
+        hayHarvestRecords,
         grainMovements,
         savedSeeds,
         sprayRecipes,
@@ -262,8 +272,8 @@ function RecipeManager() {
                     </button>
                   </div>
                 </div>
-                {recipe.products.map((p, i) => (
-                  <div key={i} className="text-muted-foreground font-mono text-xs pl-2">
+                {recipe.products.map((p) => (
+                  <div key={p.id ?? p.product} className="text-muted-foreground font-mono text-xs pl-2">
                     • {p.product} — {p.rate} {p.rateUnit}
                     {p.epaRegNumber && <span className="ml-2 text-[10px] opacity-70">(EPA: {p.epaRegNumber})</span>}
                   </div>
@@ -295,7 +305,9 @@ function RecipeForm({
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [products, setProducts] = useState<SprayRecipeProduct[]>(
-    initial?.products?.length ? initial.products : [{ product: '', rate: '', rateUnit: 'oz/ac' }]
+    initial?.products?.length
+      ? initial.products.map(p => ({ ...p, id: p.id ?? crypto.randomUUID() }))
+      : [{ id: crypto.randomUUID(), product: '', rate: '', rateUnit: 'oz/ac' }]
   );
   const [applicatorName, setApplicatorName] = useState(initial?.applicatorName ?? localStorage.getItem('ff_applicator_name') ?? '');
   const [licenseNumber, setLicenseNumber] = useState(initial?.licenseNumber ?? localStorage.getItem('ff_license_number') ?? '');
@@ -307,7 +319,7 @@ function RecipeForm({
   };
 
   const addProduct = () => {
-    setProducts(prev => [...prev, { product: '', rate: '', rateUnit: 'oz/ac' }]);
+    setProducts(prev => [...prev, { id: crypto.randomUUID(), product: '', rate: '', rateUnit: 'oz/ac' }]);
   };
 
   const removeProduct = (i: number) => {
@@ -332,7 +344,7 @@ function RecipeForm({
       </div>
       <Label className="text-muted-foreground font-mono text-xs">PRODUCTS</Label>
       {products.map((p, i) => (
-        <div key={i} className="flex gap-2 items-start border-b border-border/30 pb-3 last:border-0 last:pb-0">
+        <div key={p.id} className="flex gap-2 items-start border-b border-border/30 pb-3 last:border-0 last:pb-0">
           <div className="flex-1 space-y-2">
             <Input
               id={`product-${i}`}

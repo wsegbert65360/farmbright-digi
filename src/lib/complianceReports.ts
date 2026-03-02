@@ -150,7 +150,6 @@ export function exportHarvestData(harvestRecords: any[], fields: Field[]) {
             r.moisturePercent,
             r.destination === 'bin' ? 'On-Farm Bin' : 'Elevator/Sale',
             r.landlordSplitPercent,
-            r.landlordSplitPercent,
             field?.fsaFarmNumber || '',
             field?.fsaTractNumber || ''
         ].join(',');

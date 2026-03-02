@@ -1,13 +1,19 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
 import { ClipboardList, Sprout, Droplets, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor } from 'lucide-react';
 import { formatDate } from '@/config/constants';
+import { formatIsoDate } from '@/utils/dates';
+import { roundTo } from '@/utils/numbers';
 import { generateMissouriLog, exportFsa578Data, exportHarvestData } from '@/lib/complianceReports';
+import type { PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord } from '@/types/farm';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
 import HayModal from '@/components/HayModal';
+
+type EditableRecord = PlantRecord | SprayRecord | HarvestRecord | HayHarvestRecord;
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -31,6 +37,7 @@ const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[
 ];
 
 export default function Activity() {
+  const navigate = useNavigate();
   const {
     fields,
     plantRecords,
@@ -38,18 +45,22 @@ export default function Activity() {
     harvestRecords,
     hayHarvestRecords,
     grainMovements,
-    activeSeason,
     deletePlantRecords,
     deleteSprayRecords,
     deleteHarvestRecords,
     deleteHayHarvestRecords,
+    activeSeason,
     deleteGrainMovements
   } = useFarm();
+
+  const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('plant');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<any | null>(null);
+  const [editingRecord, setEditingRecord] = useState<EditableRecord | null>(null);
+
+  const getEditField = (fieldId: string) =>
+    fields.find(f => f.id === fieldId && !f.deleted_at) ?? null;
 
   const edit = (e: React.MouseEvent, record: any) => {
     e.stopPropagation();
@@ -147,7 +158,7 @@ export default function Activity() {
           )}
           {tab === 'hay' && (
             <button
-              onClick={() => window.location.href = '/reports?tab=hay-summary'}
+              onClick={() => navigate('/reports?tab=hay-summary')}
               className="p-2.5 rounded-lg bg-harvest/10 text-harvest hover:bg-harvest/20 transition-colors flex items-center gap-2 font-mono text-[10px] font-bold"
             >
               <FileDown size={16} />
@@ -206,9 +217,9 @@ export default function Activity() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.plantDate) || formatDate(r.timestamp)}</span>
                   </div>
-                  <div className="text-xs font-mono text-plant mt-1">{r.seedVariety} · {r.acreage} ac</div>
+                  <div className="text-xs font-mono text-plant mt-1">{r.seedVariety} · {roundTo(r.acreage, 2)} ac</div>
                 </div>
                 <button
                   onClick={(e) => edit(e, r)}
@@ -231,7 +242,7 @@ export default function Activity() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.sprayDate) || formatDate(r.timestamp)}</span>
                   </div>
                   <div className="text-xs font-mono text-spray mt-1">
                     {r.product} · {r.windSpeed}mph · {r.temperature}°F
@@ -259,10 +270,10 @@ export default function Activity() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.harvestDate) || formatDate(r.timestamp)}</span>
                   </div>
                   <div className="text-xs font-mono text-harvest mt-1">
-                    {r.bushels.toLocaleString()} bu → {r.destination === 'bin' ? 'Bin' : 'Town'} · {r.moisturePercent}% M · {r.landlordSplitPercent}% LL
+                    {r.bushels.toLocaleString()} bu → {r.destination === 'bin' ? 'Bin' : 'Town'} · {roundTo(r.moisturePercent, 1)}% M · {roundTo(r.landlordSplitPercent, 1)}% LL
                   </div>
                 </div>
                 <button
@@ -286,7 +297,7 @@ export default function Activity() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatDate(r.timestamp)}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.date) || formatDate(r.timestamp)}</span>
                   </div>
                   <div className="text-xs font-mono text-harvest mt-1">
                     {r.baleCount} {r.baleType} Bales · Cutting #{r.cuttingNumber}
@@ -374,38 +385,82 @@ export default function Activity() {
       )}
       <BottomNav />
 
-      {tab === 'plant' && editingRecord && (
-        <PlantModal
-          open={!!editingRecord}
-          onClose={() => setEditingRecord(null)}
-          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
-          initialData={editingRecord}
-        />
-      )}
-      {tab === 'spray' && editingRecord && (
-        <SprayModal
-          open={!!editingRecord}
-          onClose={() => setEditingRecord(null)}
-          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
-          initialData={editingRecord}
-        />
-      )}
-      {tab === 'harvest' && editingRecord && (
-        <HarvestModal
-          open={!!editingRecord}
-          onClose={() => setEditingRecord(null)}
-          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
-          initialData={editingRecord}
-        />
-      )}
-      {tab === 'hay' && editingRecord && (
-        <HayModal
-          open={!!editingRecord}
-          onClose={() => setEditingRecord(null)}
-          field={fields.find(f => f.id === editingRecord.fieldId) || fields[0]}
-          initialData={editingRecord}
-        />
-      )}
+      {tab === 'plant' && editingRecord && (() => {
+        const editField = getEditField(editingRecord.fieldId);
+        if (!editField) return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border p-6 rounded-xl max-w-sm w-full space-y-4 shadow-2xl">
+              <p className="text-sm text-muted-foreground">The original field for this record has been deleted.</p>
+              <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+            </div>
+          </div>
+        );
+        return (
+          <PlantModal
+            open={!!editingRecord}
+            onClose={() => setEditingRecord(null)}
+            field={editField}
+            initialData={editingRecord as PlantRecord}
+          />
+        );
+      })()}
+      {tab === 'spray' && editingRecord && (() => {
+        const editField = getEditField(editingRecord.fieldId);
+        if (!editField) return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border p-6 rounded-xl max-w-sm w-full space-y-4 shadow-2xl">
+              <p className="text-sm text-muted-foreground">The original field for this record has been deleted.</p>
+              <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+            </div>
+          </div>
+        );
+        return (
+          <SprayModal
+            open={!!editingRecord}
+            onClose={() => setEditingRecord(null)}
+            field={editField}
+            initialData={editingRecord as SprayRecord}
+          />
+        );
+      })()}
+      {tab === 'harvest' && editingRecord && (() => {
+        const editField = getEditField(editingRecord.fieldId);
+        if (!editField) return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border p-6 rounded-xl max-w-sm w-full space-y-4 shadow-2xl">
+              <p className="text-sm text-muted-foreground">The original field for this record has been deleted.</p>
+              <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+            </div>
+          </div>
+        );
+        return (
+          <HarvestModal
+            open={!!editingRecord}
+            onClose={() => setEditingRecord(null)}
+            field={editField}
+            initialData={editingRecord as HarvestRecord}
+          />
+        );
+      })()}
+      {tab === 'hay' && editingRecord && (() => {
+        const editField = getEditField(editingRecord.fieldId);
+        if (!editField) return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border p-6 rounded-xl max-w-sm w-full space-y-4 shadow-2xl">
+              <p className="text-sm text-muted-foreground">The original field for this record has been deleted.</p>
+              <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+            </div>
+          </div>
+        );
+        return (
+          <HayModal
+            open={!!editingRecord}
+            onClose={() => setEditingRecord(null)}
+            field={editField}
+            initialData={editingRecord as HayHarvestRecord}
+          />
+        );
+      })()}
     </div>
   );
 }
