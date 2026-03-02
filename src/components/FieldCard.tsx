@@ -3,7 +3,7 @@ import { Field } from '@/types/farm';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
-import { Sprout, Wheat, MapPin, CloudRain, Loader2, Tractor, Leaf } from 'lucide-react';
+import { Sprout, Wheat, MapPin, CloudRain, Loader2, Tractor, Leaf, Droplets } from 'lucide-react';
 import HayModal from '@/components/HayModal';
 import FertilizerModal from '@/components/FertilizerModal';
 
@@ -54,7 +54,7 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-90"
             title="Spray"
           >
-            <CloudRain size={22} strokeWidth={2.5} />
+            <Droplets size={22} strokeWidth={2.5} />
             <span className="font-mono text-[9px] uppercase font-bold">Spray</span>
           </button>
           <button

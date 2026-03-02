@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
-import { ClipboardList, Leaf, CloudRain, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor, Sprout } from 'lucide-react';
+import { ClipboardList, Leaf, Droplets, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor, Sprout } from 'lucide-react';
 import { formatDate } from '@/config/constants';
 import { formatIsoDate } from '@/utils/dates';
 import { roundTo } from '@/utils/numbers';
@@ -31,7 +31,7 @@ type Tab = 'plant' | 'spray' | 'fertilizer' | 'harvest' | 'hay' | 'grain';
 
 const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[] = [
   { key: 'plant', icon: Leaf, label: 'Planting', color: 'text-plant' },
-  { key: 'spray', icon: CloudRain, label: 'Spraying', color: 'text-spray' },
+  { key: 'spray', icon: Droplets, label: 'Spraying', color: 'text-spray' },
   { key: 'fertilizer', icon: Sprout, label: 'Fertilizer', color: 'text-lime-600 dark:text-lime-400' },
   { key: 'harvest', icon: Wheat, label: 'Harvesting', color: 'text-harvest' },
   { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-orange-700 dark:text-orange-400' },
