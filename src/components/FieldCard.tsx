@@ -3,7 +3,7 @@ import { Field } from '@/types/farm';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
-import { Sprout, Droplets, Wheat, MapPin, CloudRain, Loader2, Tractor } from 'lucide-react';
+import { Sprout, Wheat, MapPin, CloudRain, Loader2, Tractor, Leaf } from 'lucide-react';
 import HayModal from '@/components/HayModal';
 import FertilizerModal from '@/components/FertilizerModal';
 
@@ -18,7 +18,7 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
 
   return (
     <>
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+      <div className="bg-card border border-border rounded-lg p-3 space-y-2">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-bold text-lg text-foreground">{field.name}</h3>
@@ -39,43 +39,49 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             ) : null}
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+        <div className="flex items-center justify-between gap-1">
           <button
             onClick={() => setModal('plant')}
-            className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-plant/10 border border-plant/20 hover:bg-plant/20 text-plant transition-all active:scale-95 py-3"
+            className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-plant/10 border border-plant/20 hover:bg-plant/20 text-plant transition-all active:scale-90"
+            title="Plant"
           >
-            <Sprout size={20} strokeWidth={2} />
-            <span className="font-mono text-[10px] uppercase font-bold">Plant</span>
+            <Leaf size={22} strokeWidth={2.5} />
+            <span className="font-mono text-[9px] uppercase font-bold">Plant</span>
           </button>
           <button
             onClick={() => setModal('spray')}
-            className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-95 py-3"
+            className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-90"
+            title="Spray"
           >
-            <Droplets size={20} strokeWidth={2} />
-            <span className="font-mono text-[10px] uppercase font-bold">Spray</span>
+            <CloudRain size={22} strokeWidth={2.5} />
+            <span className="font-mono text-[9px] uppercase font-bold">Spray</span>
+          </button>
+          <button
+            onClick={() => setModal('fertilizer')}
+            className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-lime-500/10 border border-lime-500/20 hover:bg-lime-500/20 text-lime-600 dark:text-lime-400 transition-all active:scale-90"
+            title="Fertilizer"
+          >
+            <Sprout size={22} strokeWidth={2.5} />
+            <span className="font-mono text-[9px] uppercase font-bold">Fert</span>
           </button>
           <button
             onClick={() => setModal('harvest')}
-            className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-95 py-3"
+            className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-90"
+            title="Harvest"
           >
-            <Wheat size={20} strokeWidth={2} />
-            <span className="font-mono text-[10px] uppercase font-bold">Harvest</span>
+            <Wheat size={22} strokeWidth={2.5} />
+            <span className="font-mono text-[9px] uppercase font-bold">Grain</span>
           </button>
           <button
             onClick={() => setModal('hay')}
-            className="touch-target flex flex-col items-center justify-center gap-1.5 rounded-lg bg-harvest/10 border border-harvest/20 hover:bg-harvest/20 text-harvest transition-all active:scale-95 py-3"
+            className="touch-target w-16 h-16 flex flex-col items-center justify-center gap-1 rounded-xl bg-orange-700/10 border border-orange-700/20 hover:bg-orange-700/20 text-orange-700 dark:text-orange-400 transition-all active:scale-90"
+            title="Hay"
           >
-            <Tractor size={20} strokeWidth={2} />
-            <span className="font-mono text-[10px] uppercase font-bold">Hay</span>
+            <Tractor size={22} strokeWidth={2.5} />
+            <span className="font-mono text-[9px] uppercase font-bold">Hay</span>
           </button>
         </div>
-        <button
-          onClick={() => setModal('fertilizer')}
-          className="touch-target w-full h-16 flex items-center justify-center gap-3 rounded-lg bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-95"
-        >
-          <Droplets size={24} strokeWidth={2} />
-          <span className="font-mono text-sm uppercase font-bold tracking-wider">Log Fertilizer</span>
-        </button>
       </div>
 
       <PlantModal field={field} open={modal === 'plant'} onClose={() => setModal(null)} />

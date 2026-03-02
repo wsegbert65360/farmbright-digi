@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
-import { ClipboardList, Sprout, Droplets, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor } from 'lucide-react';
+import { ClipboardList, Leaf, CloudRain, Wheat, Trash2, Warehouse, FileDown, Pencil, Tractor, Sprout } from 'lucide-react';
 import { formatDate } from '@/config/constants';
 import { formatIsoDate } from '@/utils/dates';
 import { roundTo } from '@/utils/numbers';
@@ -30,11 +30,11 @@ import {
 type Tab = 'plant' | 'spray' | 'fertilizer' | 'harvest' | 'hay' | 'grain';
 
 const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[] = [
-  { key: 'plant', icon: Sprout, label: 'Planting', color: 'text-plant' },
-  { key: 'spray', icon: Droplets, label: 'Spraying', color: 'text-spray' },
-  { key: 'fertilizer', icon: Droplets, label: 'Fertilizer', color: 'text-spray' },
+  { key: 'plant', icon: Leaf, label: 'Planting', color: 'text-plant' },
+  { key: 'spray', icon: CloudRain, label: 'Spraying', color: 'text-spray' },
+  { key: 'fertilizer', icon: Sprout, label: 'Fertilizer', color: 'text-lime-600 dark:text-lime-400' },
   { key: 'harvest', icon: Wheat, label: 'Harvesting', color: 'text-harvest' },
-  { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-harvest' },
+  { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-orange-700 dark:text-orange-400' },
   { key: 'grain', icon: Warehouse, label: 'Harvest', color: 'text-harvest' },
 ];
 
@@ -78,6 +78,18 @@ export default function Activity() {
       else next.add(id);
       return next;
     });
+  };
+
+  const renderTitle = (name: string, date: string | number) => {
+    const uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi;
+    const cleanName = name.replace(uuidRegex, '').trim().replace(/\s*—\s*$/, '').replace(/\s*-\s*$/, '');
+    const formattedDate = typeof date === 'string' ? (formatIsoDate(date) || date) : formatDate(date);
+    return (
+      <div className="flex items-center justify-between w-full">
+        <span className="font-bold text-foreground text-sm truncate mr-2">{cleanName}</span>
+        <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">{formattedDate}</span>
+      </div>
+    );
   };
 
   const handleDelete = () => {
@@ -226,11 +238,8 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.plantDate) || formatDate(r.timestamp)}</span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  {renderTitle(r.fieldName, r.plantDate || r.timestamp)}
                   <div className="text-xs font-mono text-plant mt-1">{r.seedVariety} · {roundTo(r.acreage, 2)} ac</div>
                 </div>
                 <button
@@ -251,11 +260,8 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.sprayDate) || formatDate(r.timestamp)}</span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  {renderTitle(r.fieldName, r.sprayDate || r.timestamp)}
                   <div className="text-xs font-mono text-spray mt-1">
                     {r.product} · {r.windSpeed}mph · {r.temperature}°F
                     {r.startTime && ` · ${r.startTime}`}
@@ -279,11 +285,8 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.harvestDate) || formatDate(r.timestamp)}</span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  {renderTitle(r.fieldName, r.harvestDate || r.timestamp)}
                   <div className="text-xs font-mono text-harvest mt-1">
                     {r.bushels.toLocaleString()} bu → {r.destination === 'bin' ? 'Bin' : 'Town'} · {roundTo(r.moisturePercent, 1)}% M · {roundTo(r.landlordSplitPercent, 1)}% LL
                   </div>
@@ -306,11 +309,8 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.date) || formatDate(r.timestamp)}</span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  {renderTitle(r.fieldName, r.date || r.timestamp)}
                   <div className="text-xs font-mono text-harvest mt-1">
                     {r.baleCount} {r.baleType} Bales · Cutting #{r.cuttingNumber}
                     {r.temperature && ` · ${r.temperature}°F`}
@@ -334,12 +334,9 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.date)}</span>
-                  </div>
-                  <div className="text-xs font-mono text-spray mt-1">
+                <div className="flex-1 min-w-0">
+                  {renderTitle(r.fieldName, r.date)}
+                  <div className="text-xs font-mono text-lime-600 dark:text-lime-400 mt-1">
                     {r.fertilizer_formula} · {roundTo(r.acres, 2)} ac
                   </div>
                 </div>
@@ -361,16 +358,13 @@ export default function Activity() {
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground text-sm">{m.binName}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{formatDate(m.timestamp)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className={`text-xs font-mono font-bold ${m.type === 'in' ? 'text-plant' : 'text-destructive'}`}>
+                <div className="flex-1 min-w-0">
+                  {renderTitle(m.binName, m.timestamp)}
+                  <div className="flex items-center justify-between mt-1 min-w-0">
+                    <div className={`text-xs font-mono font-bold whitespace-nowrap ${m.type === 'in' ? 'text-plant' : 'text-destructive'}`}>
                       {m.type === 'in' ? '+' : '-'}{m.bushels.toLocaleString()} bu
                     </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
+                    <div className="text-[10px] font-mono text-muted-foreground truncate ml-2">
                       {m.sourceFieldName || m.destination || 'Inventory Adjustment'}
                       {m.price && ` · $${m.price}/bu`}
                     </div>
