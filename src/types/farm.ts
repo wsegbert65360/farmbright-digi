@@ -157,8 +157,23 @@ export interface SprayRecipe {
   deleted_at?: string;
 }
 
+export interface FertilizerApplication {
+  id: string;
+  farm_id: string;
+  fieldId: string;
+  fieldName: string; // From join
+  date: string;
+  acres: number;
+  fertilizer_formula: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  season_year?: number;
+}
+
 export type ActivityRecord =
   | { type: 'plant'; data: PlantRecord }
   | { type: 'spray'; data: SprayRecord }
   | { type: 'harvest'; data: HarvestRecord }
-  | { type: 'hay'; data: HayHarvestRecord };
+  | { type: 'hay'; data: HayHarvestRecord }
+  | { type: 'fertilizer'; data: FertilizerApplication };

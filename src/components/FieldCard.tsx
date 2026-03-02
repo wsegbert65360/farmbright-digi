@@ -5,6 +5,7 @@ import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
 import { Sprout, Droplets, Wheat, MapPin, CloudRain, Loader2, Tractor } from 'lucide-react';
 import HayModal from '@/components/HayModal';
+import FertilizerModal from '@/components/FertilizerModal';
 
 interface FieldCardProps {
   field: Field;
@@ -13,7 +14,7 @@ interface FieldCardProps {
 }
 
 export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProps) {
-  const [modal, setModal] = useState<'plant' | 'spray' | 'harvest' | 'hay' | null>(null);
+  const [modal, setModal] = useState<'plant' | 'spray' | 'harvest' | 'hay' | 'fertilizer' | null>(null);
 
   return (
     <>
@@ -68,12 +69,20 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             <span className="font-mono text-[10px] uppercase font-bold">Hay</span>
           </button>
         </div>
+        <button
+          onClick={() => setModal('fertilizer')}
+          className="touch-target w-full h-16 flex items-center justify-center gap-3 rounded-lg bg-spray/10 border border-spray/20 hover:bg-spray/20 text-spray transition-all active:scale-95"
+        >
+          <Droplets size={24} strokeWidth={2} />
+          <span className="font-mono text-sm uppercase font-bold tracking-wider">Log Fertilizer</span>
+        </button>
       </div>
 
       <PlantModal field={field} open={modal === 'plant'} onClose={() => setModal(null)} />
       <SprayModal field={field} open={modal === 'spray'} onClose={() => setModal(null)} />
       <HarvestModal field={field} open={modal === 'harvest'} onClose={() => setModal(null)} />
       <HayModal field={field} open={modal === 'hay'} onClose={() => setModal(null)} />
+      <FertilizerModal field={field} open={modal === 'fertilizer'} onClose={() => setModal(null)} />
     </>
   );
 }

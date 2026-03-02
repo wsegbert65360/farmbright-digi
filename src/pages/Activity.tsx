@@ -7,13 +7,14 @@ import { formatDate } from '@/config/constants';
 import { formatIsoDate } from '@/utils/dates';
 import { roundTo } from '@/utils/numbers';
 import { generateMissouriLog, exportFsa578Data, exportHarvestData } from '@/lib/complianceReports';
-import type { PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord } from '@/types/farm';
+import type { PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord, FertilizerApplication } from '@/types/farm';
 import PlantModal from '@/components/PlantModal';
 import SprayModal from '@/components/SprayModal';
 import HarvestModal from '@/components/HarvestModal';
 import HayModal from '@/components/HayModal';
+import FertilizerModal from '@/components/FertilizerModal';
 
-type EditableRecord = PlantRecord | SprayRecord | HarvestRecord | HayHarvestRecord;
+type EditableRecord = PlantRecord | SprayRecord | HarvestRecord | HayHarvestRecord | FertilizerApplication;
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -26,14 +27,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type Tab = 'plant' | 'spray' | 'harvest' | 'hay' | 'grain';
+type Tab = 'plant' | 'spray' | 'fertilizer' | 'harvest' | 'hay' | 'grain';
 
 const TABS: { key: Tab; icon: React.ElementType; label: string; color: string }[] = [
   { key: 'plant', icon: Sprout, label: 'Planting', color: 'text-plant' },
   { key: 'spray', icon: Droplets, label: 'Spraying', color: 'text-spray' },
+  { key: 'fertilizer', icon: Droplets, label: 'Fertilizer', color: 'text-spray' },
   { key: 'harvest', icon: Wheat, label: 'Harvesting', color: 'text-harvest' },
   { key: 'hay', icon: Tractor, label: 'Hay/Forage', color: 'text-harvest' },
-  { key: 'grain', icon: Warehouse, label: 'Grain', color: 'text-harvest' },
+  { key: 'grain', icon: Warehouse, label: 'Harvest', color: 'text-harvest' },
 ];
 
 export default function Activity() {
@@ -44,11 +46,13 @@ export default function Activity() {
     sprayRecords,
     harvestRecords,
     hayHarvestRecords,
+    fertilizerApplications,
     grainMovements,
     deletePlantRecords,
     deleteSprayRecords,
     deleteHarvestRecords,
     deleteHayHarvestRecords,
+    deleteFertilizerApplications,
     activeSeason,
     deleteGrainMovements
   } = useFarm();
@@ -82,6 +86,7 @@ export default function Activity() {
     else if (tab === 'spray') deleteSprayRecords(ids);
     else if (tab === 'harvest') deleteHarvestRecords(ids);
     else if (tab === 'hay') deleteHayHarvestRecords(ids);
+    else if (tab === 'fertilizer') deleteFertilizerApplications(ids);
     else deleteGrainMovements(ids);
     setSelected(new Set());
     setConfirmDelete(false);
@@ -120,6 +125,13 @@ export default function Activity() {
       .filter(m => !m.deleted_at && m.seasonYear === activeSeason && (m.fieldName.toLowerCase().includes(search.toLowerCase()) || m.baleType.toLowerCase().includes(search.toLowerCase())))
       .sort((a, b) => b.timestamp - a.timestamp),
     [hayHarvestRecords, search, activeSeason]
+  );
+
+  const filteredFertilizer = useMemo(() =>
+    fertilizerApplications
+      .filter(r => !r.deleted_at && r.season_year === activeSeason && (r.fieldName.toLowerCase().includes(search.toLowerCase()) || r.fertilizer_formula.toLowerCase().includes(search.toLowerCase())))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [fertilizerApplications, search, activeSeason]
   );
 
   return (
@@ -314,6 +326,33 @@ export default function Activity() {
             </button>
           ))}
 
+          {tab === 'fertilizer' && filteredFertilizer.map(r => (
+            <button
+              key={r.id}
+              onClick={() => toggle(r.id)}
+              className={`w-full text-left bg-card border rounded-lg p-3 transition-all ${selected.has(r.id) ? 'border-destructive bg-destructive/5' : 'border-border'
+                }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground text-sm">{r.fieldName}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatIsoDate(r.date)}</span>
+                  </div>
+                  <div className="text-xs font-mono text-spray mt-1">
+                    {r.fertilizer_formula} · {roundTo(r.acres, 2)} ac
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => edit(e, r)}
+                  className="ml-3 p-2 rounded-md hover:bg-spray/10 text-muted-foreground hover:text-spray transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            </button>
+          ))}
+
           {tab === 'grain' && filteredGrain.map(m => (
             <button
               key={m.id}
@@ -353,6 +392,7 @@ export default function Activity() {
         {tab === 'spray' && filteredSpray.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No spray records</p>}
         {tab === 'harvest' && filteredHarvest.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No harvest records</p>}
         {tab === 'hay' && filteredHay.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No hay records</p>}
+        {tab === 'fertilizer' && filteredFertilizer.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No fertilizer records</p>}
         {tab === 'grain' && filteredGrain.length === 0 && <p className="text-center text-muted-foreground font-mono text-sm py-8">No grain movement records</p>}
       </main>
 
@@ -458,6 +498,25 @@ export default function Activity() {
             onClose={() => setEditingRecord(null)}
             field={editField}
             initialData={editingRecord as HayHarvestRecord}
+          />
+        );
+      })()}
+      {tab === 'fertilizer' && editingRecord && (() => {
+        const editField = getEditField((editingRecord as FertilizerApplication).fieldId);
+        if (!editField) return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border p-6 rounded-xl max-w-sm w-full space-y-4 shadow-2xl">
+              <p className="text-sm text-muted-foreground">The original field for this record has been deleted.</p>
+              <Button onClick={() => setEditingRecord(null)} className="w-full">Close</Button>
+            </div>
+          </div>
+        );
+        return (
+          <FertilizerModal
+            open={!!editingRecord}
+            onClose={() => setEditingRecord(null)}
+            field={editField}
+            initialData={editingRecord as FertilizerApplication}
           />
         );
       })()}

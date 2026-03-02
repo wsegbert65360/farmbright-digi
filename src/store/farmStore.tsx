@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode, useMemo } from 'react';
-import { Field, PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord, Bin, GrainMovement, SavedSeed, SprayRecipe } from '@/types/farm';
+import { Field, PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord, Bin, GrainMovement, SavedSeed, SprayRecipe, FertilizerApplication } from '@/types/farm';
 import { supabase } from '@/lib/supabase';
 import {
   mapFieldFromDb, mapBinFromDb, mapPlantFromDb, mapSprayFromDb,
   mapHarvestFromDb, mapHayFromDb, mapGrainFromDb, mapSeedFromDb, mapRecipeFromDb,
   mapFieldToDb, mapBinToDb, mapPlantToDb, mapSprayToDb,
-  mapHarvestToDb, mapHayToDb, mapGrainToDb, mapSeedToDb, mapRecipeToDb
+  mapHarvestToDb, mapHayToDb, mapGrainToDb, mapSeedToDb, mapRecipeToDb,
+  mapFertilizerFromDb, mapFertilizerToDb
 } from '../lib/mappers';
 import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ interface FarmState {
   sprayRecords: SprayRecord[];
   harvestRecords: HarvestRecord[];
   hayHarvestRecords: HayHarvestRecord[];
+  fertilizerApplications: FertilizerApplication[];
   grainMovements: GrainMovement[];
   savedSeeds: SavedSeed[];
   sprayRecipes: SprayRecipe[];
@@ -68,6 +70,8 @@ interface FarmState {
   updateHarvestRecord: (r: HarvestRecord) => void;
   addHayHarvestRecord: (r: Omit<HayHarvestRecord, 'id' | 'timestamp'>) => void;
   updateHayHarvestRecord: (r: HayHarvestRecord) => void;
+  addFertilizerApplication: (r: Omit<FertilizerApplication, 'id' | 'created_at' | 'updated_at' | 'fieldName'>) => void;
+  updateFertilizerApplication: (r: FertilizerApplication) => void;
   addGrainMovement: (r: Omit<GrainMovement, 'id'> & { timestamp?: number }) => void;
   updateGrainMovement: (r: GrainMovement) => void;
   deleteGrainMovements: (ids: string[]) => void;
@@ -75,6 +79,7 @@ interface FarmState {
   deleteSprayRecords: (ids: string[]) => void;
   deleteHarvestRecords: (ids: string[]) => void;
   deleteHayHarvestRecords: (ids: string[]) => void;
+  deleteFertilizerApplications: (ids: string[]) => void;
   getBinTotal: (binId: string) => number;
   addField: (f: Omit<Field, 'id'>) => void;
   updateField: (f: Field) => void;
@@ -104,6 +109,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [sprayRecords, setSprayRecords] = useState<SprayRecord[]>(() => loadFromStorage('ff_spray', []));
   const [harvestRecords, setHarvestRecords] = useState<HarvestRecord[]>(() => loadFromStorage('ff_harvest', []));
   const [hayHarvestRecords, setHayHarvestRecords] = useState<HayHarvestRecord[]>(() => loadFromStorage('ff_hay', []));
+  const [fertilizerApplications, setFertilizerApplications] = useState<FertilizerApplication[]>(() => loadFromStorage('ff_fertilizer', []));
   const [grainMovements, setGrainMovements] = useState<GrainMovement[]>(() => loadFromStorage('ff_grain', []));
   const [savedSeeds, setSavedSeeds] = useState<SavedSeed[]>(() => loadFromStorage('ff_seeds', []));
   const [sprayRecipes, setSprayRecipes] = useState<SprayRecipe[]>(() => loadFromStorage('ff_recipes', []));
@@ -210,6 +216,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             { data: sprayData, error: sprayErr },
             { data: harvestData, error: harvestErr },
             { data: hayData, error: hayErr },
+            { data: fertilizerData, error: fertilizerErr },
             { data: grainData, error: grainErr },
             { data: seedsData, error: seedsErr },
             { data: recipesData, error: recipesErr }
@@ -220,6 +227,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             query('spray_records'),
             query('harvest_records'),
             query('hay_harvest_records'),
+            supabase.from('fertilizer_applications')
+              .select('*, fields(name)')
+              .eq('farm_id', farm_id)
+              .is('deleted_at', null),
             query('grain_movements'),
             query('saved_seeds'),
             query('spray_recipes')
@@ -227,7 +238,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
           const fetchErrors = [
             fieldsErr, binsErr, plantErr, sprayErr, harvestErr,
-            hayErr, grainErr, seedsErr, recipesErr
+            hayErr, fertilizerErr, grainErr, seedsErr, recipesErr
           ].filter(Boolean);
 
           if (fetchErrors.length > 0) {
@@ -241,6 +252,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           if (sprayData) setSprayRecords(sprayData.map(mapSprayFromDb));
           if (harvestData) setHarvestRecords(harvestData.map(mapHarvestFromDb));
           if (hayData) setHayHarvestRecords(hayData.map(mapHayFromDb));
+          if (fertilizerData) setFertilizerApplications(fertilizerData.map(mapFertilizerFromDb));
           if (grainData) setGrainMovements(grainData.map(mapGrainFromDb));
           if (seedsData) setSavedSeeds(seedsData.map(mapSeedFromDb));
           if (recipesData) setSprayRecipes(recipesData.map(mapRecipeFromDb));
@@ -263,6 +275,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   useEffect(() => { saveToStorage('ff_spray', sprayRecords); }, [sprayRecords]);
   useEffect(() => { saveToStorage('ff_harvest', harvestRecords); }, [harvestRecords]);
   useEffect(() => { saveToStorage('ff_hay', hayHarvestRecords); }, [hayHarvestRecords]);
+  useEffect(() => { saveToStorage('ff_fertilizer', fertilizerApplications); }, [fertilizerApplications]);
   useEffect(() => { saveToStorage('ff_grain', grainMovements); }, [grainMovements]);
   useEffect(() => { saveToStorage('ff_seeds', savedSeeds); }, [savedSeeds]);
   useEffect(() => { saveToStorage('ff_recipes', sprayRecipes); }, [sprayRecipes]);
@@ -680,6 +693,75 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
   }, [farm_id]);
 
+  const addFertilizerApplication = useCallback(async (r: Omit<FertilizerApplication, 'id' | 'created_at' | 'updated_at' | 'fieldName'>) => {
+    const id = uid();
+    const now = new Date().toISOString();
+    const newRecord: FertilizerApplication = {
+      ...r,
+      id,
+      created_at: now,
+      updated_at: now,
+      fieldName: fields.find(f => f.id === r.fieldId)?.name || 'Unknown Field'
+    };
+
+    setFertilizerApplications(prev => [...prev, newRecord]);
+
+    const { error } = await supabase.from('fertilizer_applications').insert([{
+      id,
+      farm_id,
+      field_id: r.fieldId,
+      date: r.date,
+      acres: r.acres,
+      fertilizer_formula: r.fertilizer_formula,
+      season_year: r.season_year || activeSeason
+    }]);
+
+    if (error) {
+      console.error('Error adding fertilizer application:', error);
+      setFertilizerApplications(prev => prev.filter(rec => rec.id !== id));
+      toast.error('Failed to save fertilizer application');
+    } else {
+      toast.success('Fertilizer application recorded!');
+    }
+  }, [activeSeason, farm_id, fields]);
+
+  const updateFertilizerApplication = useCallback(async (r: FertilizerApplication) => {
+    setFertilizerApplications(prev => prev.map(existing => existing.id === r.id ? r : existing));
+
+    const { error } = await supabase.from('fertilizer_applications').upsert({
+      id: r.id,
+      farm_id,
+      field_id: r.fieldId,
+      date: r.date,
+      acres: r.acres,
+      fertilizer_formula: r.fertilizer_formula,
+      season_year: r.season_year,
+      updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+      console.error('Error updating fertilizer application:', error);
+      toast.error('Failed to update record');
+    } else {
+      toast.success('Record updated');
+    }
+  }, [farm_id]);
+
+  const deleteFertilizerApplications = useCallback(async (ids: string[]) => {
+    setFertilizerApplications(prev => prev.filter(r => !ids.includes(r.id)));
+    const { error } = await supabase
+      .from('fertilizer_applications')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids)
+      .eq('farm_id', farm_id);
+    if (error) {
+      console.error('Error deleting fertilizer applications:', error);
+      toast.error('Failed to delete records');
+    } else {
+      toast.success('Records deleted');
+    }
+  }, [farm_id]);
+
   const getBinTotal = useCallback((binId: string) => {
     return grainMovements
       .filter(m => m.binId === binId)
@@ -913,7 +995,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const rolloverToNewSeason = useCallback(async (year: number) => {
     // 1. Force Backup (JSON export)
     const backupData = {
-      fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements, savedSeeds, sprayRecipes, activeSeason,
+      fields, bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, fertilizerApplications, grainMovements, savedSeeds, sprayRecipes, activeSeason,
       rolloverDate: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -955,6 +1037,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       const spraysToDb = (backupData.sprayRecords || []).map((r: any) => ({ ...mapSprayToDb(r), farm_id }));
       const harvestsToDb = (backupData.harvestRecords || []).map((r: any) => ({ ...mapHarvestToDb(r), farm_id }));
       const hayToDb = (backupData.hayHarvestRecords || []).map((r: any) => ({ ...mapHayToDb(r), farm_id }));
+      const fertilizerToDb = (backupData.fertilizerApplications || []).map((r: any) => ({ ...mapFertilizerToDb(r), farm_id }));
       const grainToDb = (backupData.grainMovements || []).map((m: any) => ({ ...mapGrainToDb(m), farm_id }));
       const seedsToDb = (backupData.savedSeeds || []).map((s: any) => ({ ...mapSeedToDb(s), farm_id }));
       const recipesToDb = (backupData.sprayRecipes || []).map((r: any) => ({ ...mapRecipeToDb(r), farm_id }));
@@ -973,6 +1056,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         upsert('spray_records', spraysToDb),
         upsert('harvest_records', harvestsToDb),
         upsert('hay_harvest_records', hayToDb),
+        upsert('fertilizer_applications', fertilizerToDb),
         upsert('grain_movements', grainToDb),
         upsert('saved_seeds', seedsToDb),
         upsert('spray_recipes', recipesToDb)
@@ -991,6 +1075,8 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         setHarvestRecords((backupData.harvestRecords as any[]).map(mapHarvestFromDb));
       if (backupData.hayHarvestRecords)
         setHayHarvestRecords((backupData.hayHarvestRecords as any[]).map(mapHayFromDb));
+      if (backupData.fertilizerApplications)
+        setFertilizerApplications((backupData.fertilizerApplications as any[]).map(mapFertilizerFromDb));
       if (backupData.grainMovements)
         setGrainMovements((backupData.grainMovements as any[]).map(mapGrainFromDb));
       if (backupData.savedSeeds)
@@ -1023,15 +1109,20 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     <FarmContext.Provider value={{
       session, loading,
       fields: sortedFields,
-      bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords, grainMovements,
+      bins, plantRecords, sprayRecords, harvestRecords, hayHarvestRecords,
+      fertilizerApplications,
+      grainMovements,
       savedSeeds, sprayRecipes,
       activeSeason, viewingSeason, setViewingSeason, rolloverToNewSeason,
       addPlantRecord, updatePlantRecord, addSprayRecord, updateSprayRecord,
       addHarvestRecord, updateHarvestRecord,
       addHayHarvestRecord, updateHayHarvestRecord,
+      addFertilizerApplication, updateFertilizerApplication,
       addGrainMovement, updateGrainMovement,
       deleteGrainMovements,
-      deletePlantRecords, deleteSprayRecords, deleteHarvestRecords, deleteHayHarvestRecords, getBinTotal,
+      deletePlantRecords, deleteSprayRecords, deleteHarvestRecords, deleteHayHarvestRecords,
+      deleteFertilizerApplications,
+      getBinTotal,
       addField, updateField, deleteField,
       addBin, updateBin, deleteBin,
       addSeed, deleteSeed, addSprayRecipe, updateSprayRecipe, deleteSprayRecipe,

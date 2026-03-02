@@ -1,6 +1,6 @@
 import {
     PlantRecord, SprayRecord, HarvestRecord, HayHarvestRecord,
-    GrainMovement, Field, Bin, SavedSeed, SprayRecipe
+    GrainMovement, Field, Bin, SavedSeed, SprayRecipe, FertilizerApplication
 } from '../types/farm';
 
 export const mapPlantFromDb = (db: any): PlantRecord => ({
@@ -146,6 +146,20 @@ export const mapRecipeFromDb = (db: any): SprayRecipe => ({
     deleted_at: db.deleted_at
 });
 
+export const mapFertilizerFromDb = (db: any): FertilizerApplication => ({
+    id: db.id,
+    farm_id: db.farm_id,
+    fieldId: db.field_id,
+    fieldName: db.fields?.name || db.field_name || 'Unknown Field',
+    date: db.date,
+    acres: Number(db.acres),
+    fertilizer_formula: db.fertilizer_formula,
+    created_at: db.created_at,
+    updated_at: db.updated_at,
+    deleted_at: db.deleted_at,
+    season_year: db.season_year
+});
+
 // --- Reverse Mappers (Frontend -> DB) ---
 
 export const mapPlantToDb = (r: PlantRecord) => ({
@@ -288,5 +302,16 @@ export const mapRecipeToDb = (r: SprayRecipe) => ({
     license_number: r.licenseNumber,
     target_pest: r.targetPest,
     epa_reg_number: r.epaRegNumber,
+    deleted_at: r.deleted_at
+});
+
+export const mapFertilizerToDb = (r: FertilizerApplication) => ({
+    id: r.id,
+    farm_id: r.farm_id,
+    field_id: r.fieldId,
+    date: r.date,
+    acres: r.acres,
+    fertilizer_formula: r.fertilizer_formula,
+    season_year: r.season_year,
     deleted_at: r.deleted_at
 });
