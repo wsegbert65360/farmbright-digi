@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.fertilizer_applications (
   date DATE NOT NULL,
   acres NUMERIC(10,2) NOT NULL CHECK (acres > 0),
   fertilizer_formula TEXT NOT NULL,
+  season_year INTEGER NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
