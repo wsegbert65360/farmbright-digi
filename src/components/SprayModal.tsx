@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFarm } from '@/store/farmStore';
 import { Field, SprayRecipeProduct, SprayRecord } from '@/types/farm';
 import { fetchWeatherForCoords } from '@/components/WeatherWidget';
-import { Droplets, Loader2, Clock, MapPin, User, FileText, X, Plus } from 'lucide-react';
+import { CloudRain, Loader2, Clock, MapPin, User, FileText, X, Plus } from 'lucide-react';
 import type { WeatherData } from '@/components/WeatherWidget';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
@@ -163,7 +163,7 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
       <DialogContent className="bg-card border-spray/30 max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-spray font-bold">
-            <Droplets size={20} />
+            <CloudRain size={20} />
             {initialData ? 'Edit' : 'Spray Application'} — {field.name}
           </DialogTitle>
         </DialogHeader>

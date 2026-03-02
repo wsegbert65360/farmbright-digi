@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFarm } from '@/store/farmStore';
 import { FertilizerApplication, Field } from '@/types/farm';
-import { Droplets, X, Calendar, MapPin, Gauge } from 'lucide-react';
+import { Sprout, X, Calendar, MapPin, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -67,8 +67,8 @@ export default function FertilizerModal({ field, open, onClose, initialData }: F
             <div className="bg-card border border-border w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                 <header className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-spray/10 flex items-center justify-center">
-                            <Droplets className="text-spray" size={20} />
+                        <div className="w-10 h-10 rounded-xl bg-lime-500/10 flex items-center justify-center">
+                            <Sprout className="text-lime-600 dark:text-lime-400" size={20} />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-foreground leading-tight">Fertilizer</h2>

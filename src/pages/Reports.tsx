@@ -3,7 +3,7 @@ import { useFarm } from '@/store/farmStore';
 import BottomNav from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Sprout, Droplets, Wheat, Printer, Download, History, Tractor } from 'lucide-react';
+import { FileText, Sprout, CloudRain, Wheat, Printer, Download, History, Tractor } from 'lucide-react';
 import { generateMissouriLog, exportFsa578Data, exportHarvestData, exportFertilizerData } from '@/lib/complianceReports';
 import { formatIsoDate, parseLocalDate, formatDisplayDate } from '@/utils/dates';
 import { roundTo } from '@/utils/numbers';
@@ -49,7 +49,7 @@ export default function Reports() {
 
   const tabs: { key: ReportTab; icon: typeof Sprout; label: string; color: string }[] = [
     { key: 'fsa-plant', icon: Sprout, label: 'FSA Plant', color: 'text-plant' },
-    { key: 'spray-audit', icon: Droplets, label: 'Spray Audit', color: 'text-spray' },
+    { key: 'spray-audit', icon: CloudRain, label: 'Spray Audit', color: 'text-spray' },
     { key: 'fertilizer-summary', icon: Sprout, label: 'Fertilizer', color: 'text-lime-600 dark:text-lime-400' },
     { key: 'fsa-harvest', icon: Wheat, label: 'FSA Harvest', color: 'text-harvest' },
     { key: 'hay-summary', icon: Tractor, label: 'Hay Summary', color: 'text-harvest' },
