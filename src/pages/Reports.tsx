@@ -4,11 +4,11 @@ import BottomNav from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Sprout, Droplets, Wheat, Printer, Download, History, Tractor } from 'lucide-react';
-import { generateMissouriLog, exportFsa578Data, exportHarvestData } from '@/lib/complianceReports';
+import { generateMissouriLog, exportFsa578Data, exportHarvestData, exportFertilizerData } from '@/lib/complianceReports';
 import { formatIsoDate, parseLocalDate, formatDisplayDate } from '@/utils/dates';
 import { roundTo } from '@/utils/numbers';
 
-type ReportTab = 'fsa-plant' | 'spray-audit' | 'fsa-harvest' | 'hay-summary';
+type ReportTab = 'fsa-plant' | 'spray-audit' | 'fertilizer-summary' | 'fsa-harvest' | 'hay-summary';
 
 export default function Reports() {
   const {
@@ -17,6 +17,7 @@ export default function Reports() {
     harvestRecords: allHarvest,
     hayHarvestRecords: allHay,
     grainMovements: allGrain,
+    fertilizerApplications: allFertilizer,
     fields,
     activeSeason,
     viewingSeason,
@@ -30,6 +31,7 @@ export default function Reports() {
   const sprayRecords = allSpray.filter(r => r.seasonYear === viewingSeason);
   const harvestRecords = allHarvest.filter(r => r.seasonYear === viewingSeason);
   const hayRecords = allHay.filter(r => r.seasonYear === viewingSeason);
+  const fertilizerRecords = allFertilizer.filter(r => r.season_year === viewingSeason);
 
   // Derive available seasons for the selector
   const availableSeasons = Array.from(new Set([
@@ -38,7 +40,8 @@ export default function Reports() {
     ...allSpray.map(r => r.seasonYear),
     ...allHarvest.map(r => r.seasonYear),
     ...allHay.map(r => r.seasonYear),
-    ...allGrain.map(r => r.seasonYear)
+    ...allGrain.map(r => r.seasonYear),
+    ...allFertilizer.map(r => r.season_year)
   ])).filter((y): y is number => !!y).sort((a, b) => b - a);
 
   const fmt = (ts: number) => new Date(ts).toLocaleDateString();
@@ -47,6 +50,7 @@ export default function Reports() {
   const tabs: { key: ReportTab; icon: typeof Sprout; label: string; color: string }[] = [
     { key: 'fsa-plant', icon: Sprout, label: 'FSA Plant', color: 'text-plant' },
     { key: 'spray-audit', icon: Droplets, label: 'Spray Audit', color: 'text-spray' },
+    { key: 'fertilizer-summary', icon: Sprout, label: 'Fertilizer', color: 'text-lime-600 dark:text-lime-400' },
     { key: 'fsa-harvest', icon: Wheat, label: 'FSA Harvest', color: 'text-harvest' },
     { key: 'hay-summary', icon: Tractor, label: 'Hay Summary', color: 'text-harvest' },
   ];
@@ -394,6 +398,56 @@ export default function Reports() {
               </div>
               {harvestRecords.length === 0 && (
                 <p className="text-center text-muted-foreground font-mono text-sm py-8">No harvest records to report</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Fertilizer Summary Report */}
+        {tab === 'fertilizer-summary' && (
+          <div className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-4 print:border-foreground/20">
+              <h2 className="font-bold text-foreground text-base mb-1">Fertilizer Application Summary</h2>
+              <p className="text-xs font-mono text-muted-foreground mb-4">
+                Summary of fertilizer applications. Generated {new Date().toLocaleDateString()}.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-2 font-mono text-xs text-muted-foreground">DATE</th>
+                      <th className="text-left py-2 px-2 font-mono text-xs text-muted-foreground">FIELD</th>
+                      <th className="text-left py-2 px-2 font-mono text-xs text-muted-foreground">FORMULA</th>
+                      <th className="text-right py-2 px-2 font-mono text-xs text-muted-foreground">ACRES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fertilizerRecords
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .map(r => (
+                        <tr key={r.id} className="border-b border-border/50">
+                          <td className="py-2 px-2 font-mono text-xs text-foreground uppercase tracking-tighter">{fmtDate(r.date)}</td>
+                          <td className="py-2 px-2 text-foreground font-semibold text-xs min-w-[120px]">
+                            {fields.find(f => f.id === r.fieldId)?.name || r.fieldName}
+                          </td>
+                          <td className="py-2 px-2 font-mono text-xs text-lime-600 dark:text-lime-400 font-bold">{r.fertilizer_formula}</td>
+                          <td className="py-2 px-2 font-mono text-xs text-foreground text-right">{r.acres}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-lime-500/30">
+                      <td colSpan={3} className="py-2 px-4 font-mono text-[10px] font-bold text-muted-foreground uppercase">Grand Total Applied</td>
+                      <td className="py-2 px-2 font-mono text-xs font-bold text-lime-600 dark:text-lime-400 text-right whitespace-nowrap">
+                        {roundTo(fertilizerRecords.reduce((sum, r) => sum + r.acres, 0), 2)} ac
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              {fertilizerRecords.length === 0 && (
+                <p className="text-center text-muted-foreground font-mono text-sm py-8">No fertilizer records to report</p>
               )}
             </div>
           </div>

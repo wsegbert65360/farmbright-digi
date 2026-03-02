@@ -1,4 +1,4 @@
-import { SprayRecord, Field, PlantRecord } from '../types/farm';
+import { SprayRecord, Field, PlantRecord, FertilizerApplication } from '../types/farm';
 
 export function generateMissouriLog(records: SprayRecord[], fields: Field[]) {
     const header = [
@@ -157,6 +157,30 @@ export function exportHarvestData(harvestRecords: any[], fields: Field[]) {
 
     const csvContent = [header, ...rows].join('\n');
     downloadFile(csvContent, `FSA_Harvest_Report_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+}
+
+export function exportFertilizerData(records: FertilizerApplication[], fields: Field[]) {
+    const header = [
+        'Date',
+        'Field',
+        'Acres',
+        'Fertilizer Formula',
+        'Season'
+    ].join(',');
+
+    const rows = records.map(r => {
+        const field = fields.find(f => f.id === r.fieldId);
+        return [
+            r.date,
+            `"${field?.name || r.fieldName || ''}"`,
+            r.acres,
+            `"${r.fertilizer_formula}"`,
+            r.season_year
+        ].join(',');
+    });
+
+    const csvContent = [header, ...rows].join('\n');
+    downloadFile(csvContent, `Fertilizer_Report_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
 }
 
 function downloadFile(content: string, fileName: string, contentType: string) {
