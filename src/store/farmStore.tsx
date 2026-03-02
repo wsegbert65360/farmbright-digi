@@ -719,7 +719,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error adding fertilizer application:', error);
       setFertilizerApplications(prev => prev.filter(rec => rec.id !== id));
-      toast.error('Failed to save fertilizer application');
+      toast.error(`Failed to save: ${error.message}`);
     } else {
       toast.success('Fertilizer application recorded!');
     }
