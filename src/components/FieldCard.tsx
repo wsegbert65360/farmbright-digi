@@ -71,7 +71,7 @@ export default function FieldCard({ field, rain24h, rainLoading }: FieldCardProp
             title="Harvest"
           >
             <Wheat size={22} strokeWidth={2.5} />
-            <span className="font-mono text-[9px] uppercase font-bold">Grain</span>
+            <span className="font-mono text-[9px] uppercase font-bold">Harvest</span>
           </button>
           <button
             onClick={() => setModal('hay')}
