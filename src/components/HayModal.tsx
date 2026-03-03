@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFarm } from '@/store/farmStore';
 import { Field, HayHarvestRecord } from '@/types/farm';
 import { Tractor, Thermometer, Cloud, Hash, Layers } from 'lucide-react';
-import { fetchWeatherForCoords } from '@/components/WeatherWidget';
+import { WeatherService } from '@/services/WeatherService';
+import { WeatherData } from '@/types/weather';
 
 interface HayModalProps {
     field: Field;
@@ -29,7 +30,7 @@ export default function HayModal({ field, open, onClose, initialData }: HayModal
     useEffect(() => {
         if (open && !initialData) {
             setLoadingWeather(true);
-            fetchWeatherForCoords(field.lat, field.lng).then(w => {
+            WeatherService.fetchCurrentWeather(`${field.lat},${field.lng}`).then(w => {
                 if (w) {
                     setTemp(w.temp.toString());
                     // Map some conditions if possible, or just use temp

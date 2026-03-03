@@ -1,66 +1,10 @@
 import { Wind, Thermometer, Droplets, MapPin, Loader2 } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
-
-export interface WeatherData {
-  wind: number;
-  temp: number;
-  humidity: number;
-  windDirection: string;
-}
-
-const DIRECTION_LABELS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-
-function degreesToDirection(deg: number): string {
-  const idx = Math.round(deg / 22.5) % 16;
-  return DIRECTION_LABELS[idx];
-}
+import { WeatherService } from '@/services/WeatherService';
+import { WeatherData } from '@/types/weather';
 
 function fallbackWeather(): WeatherData {
   return { wind: 0, temp: 0, humidity: 0, windDirection: '—' };
-}
-
-async function fetchWeatherByCoords(lat: number, lng: number): Promise<WeatherData> {
-  const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
-  );
-  if (!res.ok) throw new Error('Weather API error');
-  const data = await res.json();
-  const c = data.current;
-  return {
-    wind: Math.round(c.wind_speed_10m),
-    temp: Math.round(c.temperature_2m),
-    humidity: Math.round(c.relative_humidity_2m),
-    windDirection: degreesToDirection(c.wind_direction_10m),
-  };
-}
-
-async function geocodeZip(zip: string): Promise<{ lat: number; lng: number; name: string }> {
-  const res = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${zip}&count=1&language=en&format=json`
-  );
-  if (!res.ok) throw new Error('Geocoding error');
-  const data = await res.json();
-  if (!data.results?.length) throw new Error('Location not found');
-  const r = data.results[0];
-  return { lat: r.latitude, lng: r.longitude, name: r.name };
-}
-
-export async function fetchWeatherForZip(zip: string): Promise<WeatherData & { locationName: string }> {
-  try {
-    const geo = await geocodeZip(zip);
-    const weather = await fetchWeatherByCoords(geo.lat, geo.lng);
-    return { ...weather, locationName: geo.name };
-  } catch {
-    return { ...fallbackWeather(), locationName: 'Unknown' };
-  }
-}
-
-export async function fetchWeatherForCoords(lat: number, lng: number): Promise<WeatherData> {
-  try {
-    return await fetchWeatherByCoords(lat, lng);
-  } catch {
-    return fallbackWeather();
-  }
 }
 
 function loadZip(): string {
@@ -80,9 +24,9 @@ export default function WeatherBar() {
   const load = useCallback(async (z: string) => {
     if (!z.trim()) return;
     setLoading(true);
-    const result = await fetchWeatherForZip(z.trim());
+    const result = await WeatherService.fetchCurrentWeather(z.trim());
     setWeather(result);
-    setLocationName(result.locationName);
+    setLocationName(result.locationName || '');
     setLoading(false);
   }, []);
 

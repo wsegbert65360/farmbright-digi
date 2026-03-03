@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFarm } from '@/store/farmStore';
 import { Field, SprayRecipeProduct, SprayRecord } from '@/types/farm';
-import { fetchWeatherForCoords } from '@/components/WeatherWidget';
+import { WeatherService } from '@/services/WeatherService';
+import { WeatherData } from '@/types/weather';
 import { CloudRain, Loader2, Clock, MapPin, User, FileText, X, Plus } from 'lucide-react';
-import type { WeatherData } from '@/components/WeatherWidget';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -73,7 +73,7 @@ export default function SprayModal({ field, open, onClose, initialData }: SprayM
   useEffect(() => {
     if (open) {
       setLoading(true);
-      fetchWeatherForCoords(field.lat, field.lng).then(w => {
+      WeatherService.fetchCurrentWeather(`${field.lat},${field.lng}`).then(w => {
         setWeather(w);
         if (w && !manualWindDirection) setManualWindDirection(w.windDirection);
         setLoading(false);

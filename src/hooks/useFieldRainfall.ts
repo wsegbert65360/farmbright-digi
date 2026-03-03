@@ -1,15 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Field } from '@/types/farm';
-
-async function fetchRain24h(lat: number, lng: number): Promise<number> {
-  const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=precipitation&past_hours=24&forecast_hours=0&precipitation_unit=inch&timezone=auto`
-  );
-  if (!res.ok) throw new Error('Rain API error');
-  const data = await res.json();
-  const precip: number[] = data.hourly?.precipitation || [];
-  return precip.reduce((sum, v) => sum + (v || 0), 0);
-}
+import { WeatherService } from '@/services/WeatherService';
 
 const rainCache: Record<string, { value: number; timestamp: number }> = {};
 const CACHE_TTL = 30 * 60 * 1000;
@@ -36,7 +27,7 @@ export function useFieldRainfall(fields: Field[]) {
       }
 
       try {
-        const value = await fetchRain24h(f.lat, f.lng);
+        const value = await WeatherService.fetchRain24h(f.lat, f.lng);
         results[f.id] = value;
         rainCache[f.id] = { value, timestamp: now };
       } catch (err) {
