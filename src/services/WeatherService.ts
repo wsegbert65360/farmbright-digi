@@ -1,6 +1,6 @@
 import { WeatherData } from '../types/weather';
 
-const API_KEY = import.meta.env.VITE_VISUALCROSSING_KEY || 'BJ8CSMU4Q2XCG53UQ5K5PH2Y3';
+const API_KEY = import.meta.env.VITE_VISUALCROSSING_KEY;
 const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
 
 /**

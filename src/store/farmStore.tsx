@@ -93,6 +93,7 @@ interface FarmState {
   updateSprayRecipe: (r: SprayRecipe) => void;
   deleteSprayRecipe: (id: string) => void;
   signOut: () => void;
+  clearLocalCache: () => void;
   farm_id: string | null;
   restoreFromBackup: (data: any) => Promise<void>;
 }
@@ -1096,9 +1097,32 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     }
   }, [farm_id]);
 
+  const clearLocalCache = useCallback(() => {
+    // Clear all keys starting with ff_
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('ff_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    // Reset local state to defaults
+    setFields(DEFAULT_FIELDS);
+    setBins(DEFAULT_BINS);
+    setPlantRecords([]);
+    setSprayRecords([]);
+    setHarvestRecords([]);
+    setHayHarvestRecords([]);
+    setFertilizerApplications([]);
+    setGrainMovements([]);
+    setSavedSeeds([]);
+    setSprayRecipes([]);
+    setFarmId(null);
+    toast.success('Local cache cleared');
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-  }, []);
+    clearLocalCache();
+  }, [clearLocalCache]);
 
   const sortedFields = useMemo(() =>
     [...fields].sort((a, b) => a.name.localeCompare(b.name)),
@@ -1127,6 +1151,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       addBin, updateBin, deleteBin,
       addSeed, deleteSeed, addSprayRecipe, updateSprayRecipe, deleteSprayRecipe,
       signOut,
+      clearLocalCache,
       farm_id,
       restoreFromBackup,
     }}>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud, Database } from 'lucide-react';
+import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud, Database, ShieldAlert } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import type { SprayRecipeProduct } from '@/types/farm';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ export default function Settings() {
         <RecipeManager />
         <SyncStatus />
         <BackupManager />
+        <SecurityManager />
         <AccountManager />
       </div>
       <BottomNav />
