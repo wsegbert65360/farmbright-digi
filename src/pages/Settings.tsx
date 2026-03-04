@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud, Database, ShieldAlert } from 'lucide-react';
+import { Sprout, Droplets, Plus, Trash2, X, Download, LogOut, Cloud, Database, ShieldAlert, Sun, Moon, Laptop } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 import BottomNav from '@/components/BottomNav';
 import type { SprayRecipeProduct } from '@/types/farm';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ export default function Settings() {
 
         <SeedManager />
         <RecipeManager />
+        <DisplayManager />
         <SyncStatus />
         <BackupManager />
         <SecurityManager />
@@ -142,6 +144,7 @@ function BackupManager() {
     <Card className="border-border/30">
       <CardHeader className="pb-3">
         <CardTitle className="text-foreground text-lg flex items-center gap-2">
+          <Database size={18} className="text-primary" />
           Backup Data
         </CardTitle>
       </CardHeader>
@@ -155,7 +158,14 @@ function BackupManager() {
           variant="outline"
           className="w-full"
         >
-          {backingUp ? 'Creating Backup...' : 'Download Backup JSON'}
+          {backingUp ? (
+            'Creating Backup...'
+          ) : (
+            <>
+              <Download size={16} className="mr-2" />
+              Download Backup JSON
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>
@@ -452,5 +462,83 @@ function RecipeForm({
         <Button onClick={onCancel} variant="ghost" size="sm">Cancel</Button>
       </div>
     </div>
+  );
+}
+
+function DisplayManager() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <Card className="border-border/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-foreground text-lg flex items-center gap-2">
+          <Sun size={18} className="text-primary" />
+          Display Settings
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            variant={theme === "light" ? "default" : "outline"}
+            size="sm"
+            className="flex flex-col h-20 gap-2"
+            onClick={() => setTheme("light")}
+          >
+            <Sun size={20} />
+            <span className="text-xs font-mono">Light</span>
+          </Button>
+          <Button
+            variant={theme === "dark" ? "default" : "outline"}
+            size="sm"
+            className="flex flex-col h-20 gap-2"
+            onClick={() => setTheme("dark")}
+          >
+            <Moon size={20} />
+            <span className="text-xs font-mono">Dark</span>
+          </Button>
+          <Button
+            variant={theme === "system" ? "default" : "outline"}
+            size="sm"
+            className="flex flex-col h-20 gap-2"
+            onClick={() => setTheme("system")}
+          >
+            <Laptop size={20} />
+            <span className="text-xs font-mono">System</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SecurityManager() {
+  const { clearLocalCache } = useFarm();
+
+  return (
+    <Card className="border-destructive/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-foreground text-lg flex items-center gap-2">
+          <ShieldAlert size={18} className="text-destructive" />
+          Security & Privacy
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground font-mono leading-relaxed">
+          Remove all sensitive farm data from this device's local storage. This will require a fresh cloud sync.
+        </p>
+        <Button
+          variant="outline"
+          className="w-full border-destructive/20 text-destructive hover:bg-destructive/10"
+          onClick={() => {
+            if (confirm('Are you sure you want to clear your local cache? This will remove all local data and require a re-sync from the cloud.')) {
+              clearLocalCache();
+            }
+          }}
+        >
+          <Trash2 size={16} className="mr-2" />
+          Clear Local Cache
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

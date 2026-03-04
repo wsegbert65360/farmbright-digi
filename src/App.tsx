@@ -46,16 +46,20 @@ const AppContent = () => {
   );
 };
 
+import { ThemeProvider } from "@/components/ThemeProvider";
+
 const App = () => (
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <FarmProvider>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </FarmProvider>
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="ff-ui-theme">
+        <TooltipProvider>
+          <FarmProvider>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </FarmProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </BrowserRouter>
 );
