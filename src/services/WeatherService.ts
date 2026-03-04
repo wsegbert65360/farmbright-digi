@@ -5,7 +5,7 @@ const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/r
 
 /**
  * Hardened Weather Service using Visual Crossing Timeline API.
- * Uses &unitGroup=us for inches/fahrenheit and &timezone=local for accurate local reporting.
+ * Uses &unitGroup=us for inches/fahrenheit.
  */
 export const WeatherService = {
     /**
@@ -22,7 +22,7 @@ export const WeatherService = {
      */
     async fetchRainByLocation(location: string): Promise<number> {
         try {
-            const url = `${BASE_URL}/${location}/today?unitGroup=us&key=${API_KEY}&contentType=json&include=days&timezone=local`;
+            const url = `${BASE_URL}/${location}/today?unitGroup=us&key=${API_KEY}&contentType=json&include=days`;
 
             const response = await fetch(url);
             if (!response.ok) {
@@ -48,7 +48,7 @@ export const WeatherService = {
      */
     async fetchCurrentWeather(location: string): Promise<WeatherData & { locationName?: string }> {
         try {
-            const url = `${BASE_URL}/${location}/today?unitGroup=us&key=${API_KEY}&contentType=json&include=current&timezone=local`;
+            const url = `${BASE_URL}/${location}/today?unitGroup=us&key=${API_KEY}&contentType=json&include=current`;
 
             const response = await fetch(url);
             if (!response.ok) {
