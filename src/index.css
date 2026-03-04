@@ -7,55 +7,55 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 210 25% 92%;
     --foreground: 222 47% 11%;
 
-    --card: 210 20% 99%;
+    --card: 210 25% 97%;
     --card-foreground: 222 47% 11%;
 
-    --popover: 210 20% 99%;
+    --popover: 210 25% 98%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 142 80% 30%;
+    --primary-foreground: 210 25% 98%;
 
-    --secondary: 210 100% 42%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 210 90% 40%;
+    --secondary-foreground: 210 25% 98%;
 
-    --muted: 210 20% 94%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 25% 85%;
+    --muted-foreground: 215 20% 40%;
 
-    --accent: 38 92% 50%;
+    --accent: 38 95% 45%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 90% 50%;
+    --destructive-foreground: 210 25% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 142 76% 36%;
+    --border: 214 30% 80%;
+    --input: 214 30% 80%;
+    --ring: 142 80% 30%;
 
     --radius: 1rem;
 
-    /* Farm-specific tokens (Light Mode Refined) */
-    --plant: 142 76% 36%;
-    --plant-foreground: 210 20% 98%;
-    --spray: 210 100% 42%;
-    --spray-foreground: 210 20% 98%;
-    --harvest: 38 92% 50%;
+    /* Farm-specific tokens (Light Mode Refined - More Color) */
+    --plant: 142 80% 30%;
+    --plant-foreground: 210 25% 98%;
+    --spray: 210 90% 40%;
+    --spray-foreground: 210 25% 98%;
+    --harvest: 38 95% 45%;
     --harvest-foreground: 222 47% 11%;
-    --neon-glow-plant: 0 0 20px hsl(142 76% 36% / 0.15);
-    --neon-glow-spray: 0 0 20px hsl(210 100% 42% / 0.15);
-    --neon-glow-harvest: 0 0 20px hsl(38 92% 50% / 0.15);
+    --neon-glow-plant: 0 0 20px hsl(142 80% 30% / 0.1);
+    --neon-glow-spray: 0 0 20px hsl(210 90% 40% / 0.1);
+    --neon-glow-harvest: 0 0 20px hsl(38 95% 45% / 0.1);
 
-    --sidebar-background: 210 20% 96%;
+    --sidebar-background: 210 25% 90%;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 222 47% 11%;
-    --sidebar-primary-foreground: 210 20% 98%;
-    --sidebar-accent: 210 20% 92%;
+    --sidebar-primary-foreground: 210 25% 98%;
+    --sidebar-accent: 210 25% 85%;
     --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 88%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-border: 214 30% 75%;
+    --sidebar-ring: 142 80% 30%;
 
     --safe-area-top: env(safe-area-inset-top);
     --safe-area-bottom: env(safe-area-inset-bottom);
