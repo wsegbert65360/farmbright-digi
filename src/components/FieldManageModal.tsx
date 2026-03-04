@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -352,7 +352,23 @@ export default function FieldManageModal({ open, onClose, editField }: FieldMana
 }
 
 export function FieldManager() {
-  const { fields, deleteField } = useFarm();
+  const { fields: allFields, deleteField } = useFarm();
+  const { rowCrops, pastureHay } = useMemo(() => {
+    const activeFields = allFields.filter(f => !f.deleted_at);
+    const sorted = [...activeFields].sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      rowCrops: sorted.filter(f => {
+        const use = (f.intendedUse || '').toLowerCase();
+        return !use.includes('pasture') && !use.includes('hay');
+      }),
+      pastureHay: sorted.filter(f => {
+        const use = (f.intendedUse || '').toLowerCase();
+        return use.includes('pasture') || use.includes('hay');
+      })
+    };
+  }, [allFields]);
+
   const [editField, setEditField] = useState<Field | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -368,30 +384,71 @@ export function FieldManager() {
           Add New Field
         </button>
 
-        {fields.filter(f => !f.deleted_at).map(field => (
-          <div key={field.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
-            <div>
-              <span className="font-bold text-foreground text-sm">{field.name}</span>
-              <div className="text-xs font-mono text-muted-foreground mt-0.5">
-                {field.acreage} ac · {field.lat.toFixed(3)}, {field.lng.toFixed(3)}
+        {[...rowCrops, ...pastureHay].length > 0 && (
+          <div className="space-y-4">
+            {rowCrops.length > 0 && (
+              <div className="space-y-2">
+                {pastureHay.length > 0 && (
+                  <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Row Crops</h3>
+                )}
+                {rowCrops.map((field: Field) => (
+                  <div key={field.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-foreground text-sm">{field.name}</span>
+                      <div className="text-xs font-mono text-muted-foreground mt-0.5">
+                        {field.acreage} ac · {field.lat.toFixed(3)}, {field.lng.toFixed(3)}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setEditField(field)}
+                        className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(field.id)}
+                        className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setEditField(field)}
-                className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onClick={() => setDeleteConfirm(field.id)}
-                className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+            )}
+
+            {pastureHay.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Pasture & Hay</h3>
+                {pastureHay.map((field: Field) => (
+                  <div key={field.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-foreground text-sm">{field.name}</span>
+                      <div className="text-xs font-mono text-muted-foreground mt-0.5">
+                        {field.acreage} ac · {field.lat.toFixed(3)}, {field.lng.toFixed(3)}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setEditField(field)}
+                        className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(field.id)}
+                        className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
 
       {addOpen && (

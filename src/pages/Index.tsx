@@ -9,9 +9,26 @@ import { Tractor, Settings, History } from 'lucide-react';
 
 const Index = () => {
   const { fields: allFields } = useFarm();
-  const fields = useMemo(() => allFields.filter(f => !f.deleted_at), [allFields]);
+  const { rowCrops, pastureHay } = useMemo(() => {
+    const activeFields = allFields.filter(f => !f.deleted_at);
+    // Sort all alphabetically first
+    const sorted = [...activeFields].sort((a, b) => a.name.localeCompare(b.name));
+
+    // Group
+    return {
+      rowCrops: sorted.filter(f => {
+        const use = (f.intendedUse || '').toLowerCase();
+        return !use.includes('pasture') && !use.includes('hay');
+      }),
+      pastureHay: sorted.filter(f => {
+        const use = (f.intendedUse || '').toLowerCase();
+        return use.includes('pasture') || use.includes('hay');
+      })
+    };
+  }, [allFields]);
+
   const [managing, setManaging] = useState(false);
-  const { rain, loading: rainLoading } = useFieldRainfall(fields);
+  const { rain, loading: rainLoading } = useFieldRainfall([...rowCrops, ...pastureHay]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -23,7 +40,7 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground tracking-tight">FarmFlow</h1>
-              <p className="text-xs font-mono text-muted-foreground">{fields.length} FIELDS</p>
+              <p className="text-xs font-mono text-muted-foreground">{rowCrops.length + pastureHay.length} FIELDS</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -55,14 +72,37 @@ const Index = () => {
         {managing ? (
           <FieldManager />
         ) : (
-          fields.map(field => (
-            <FieldCard
-              key={field.id}
-              field={field}
-              rain24h={rain[field.id] ?? null}
-              rainLoading={rainLoading && rain[field.id] == null}
-            />
-          ))
+          <>
+            {rowCrops.length > 0 && (
+              <div className="space-y-3">
+                {pastureHay.length > 0 && (
+                  <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Row Crops</h2>
+                )}
+                {rowCrops.map(field => (
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    rain24h={rain[field.id] ?? null}
+                    rainLoading={rainLoading && rain[field.id] == null}
+                  />
+                ))}
+              </div>
+            )}
+
+            {pastureHay.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Pasture & Hay</h2>
+                {pastureHay.map(field => (
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    rain24h={rain[field.id] ?? null}
+                    rainLoading={rainLoading && rain[field.id] == null}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
       <BottomNav />
