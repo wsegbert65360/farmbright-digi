@@ -7,55 +7,55 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card: 210 20% 99%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover: 210 20% 99%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 142 72% 40%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 210 20% 98%;
 
-    --secondary: 210 100% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 210 100% 42%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 45 100% 45%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 142 72% 40%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 142 76% 36%;
 
     --radius: 1rem;
 
-    /* Farm-specific tokens (Light Mode Adjusted) */
-    --plant: 142 72% 40%;
-    --plant-foreground: 0 0% 100%;
-    --spray: 210 100% 45%;
-    --spray-foreground: 0 0% 100%;
-    --harvest: 45 100% 45%;
-    --harvest-foreground: 0 0% 0%;
-    --neon-glow-plant: 0 0 20px hsl(142 72% 40% / 0.2);
-    --neon-glow-spray: 0 0 20px hsl(210 100% 45% / 0.2);
-    --neon-glow-harvest: 0 0 20px hsl(45 100% 45% / 0.2);
+    /* Farm-specific tokens (Light Mode Refined) */
+    --plant: 142 76% 36%;
+    --plant-foreground: 210 20% 98%;
+    --spray: 210 100% 42%;
+    --spray-foreground: 210 20% 98%;
+    --harvest: 38 92% 50%;
+    --harvest-foreground: 222 47% 11%;
+    --neon-glow-plant: 0 0 20px hsl(142 76% 36% / 0.15);
+    --neon-glow-spray: 0 0 20px hsl(210 100% 42% / 0.15);
+    --neon-glow-harvest: 0 0 20px hsl(38 92% 50% / 0.15);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 240 5% 64.9%;
+    --sidebar-background: 210 20% 96%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 222 47% 11%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 210 20% 92%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 88%;
+    --sidebar-ring: 142 76% 36%;
 
     --safe-area-top: env(safe-area-inset-top);
     --safe-area-bottom: env(safe-area-inset-bottom);
